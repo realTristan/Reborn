@@ -1,0 +1,13 @@
+c:\Users\Admin\Desktop\Reborn\bot\target\debug\deps\cc-c50ecf8cb38c03a9.rmeta: C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\lib.rs C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\registry.rs C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\winapi.rs C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\com.rs C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\setup_config.rs C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\vs_instances.rs C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\windows_registry.rs
+
+c:\Users\Admin\Desktop\Reborn\bot\target\debug\deps\libcc-c50ecf8cb38c03a9.rlib: C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\lib.rs C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\registry.rs C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\winapi.rs C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\com.rs C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\setup_config.rs C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\vs_instances.rs C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\windows_registry.rs
+
+c:\Users\Admin\Desktop\Reborn\bot\target\debug\deps\cc-c50ecf8cb38c03a9.d: C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\lib.rs C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\registry.rs C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\winapi.rs C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\com.rs C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\setup_config.rs C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\vs_instances.rs C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\windows_registry.rs
+
+C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\lib.rs:
+C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\registry.rs:
+C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\winapi.rs:
+C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\com.rs:
+C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\setup_config.rs:
+C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\vs_instances.rs:
+C:\Users\Admin\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.78\src\windows_registry.rs:

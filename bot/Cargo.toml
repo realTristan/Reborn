@@ -1,0 +1,10 @@
+[package]
+name = "reborn_bot"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+lazy_static = "1.4.0"
+reqwest = "0.11"
+serenity = "0.11"
+tokio = { version = "1.21.1", features = ["macros", "rt-multi-thread", "time"] }

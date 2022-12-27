@@ -36,7 +36,7 @@ pub fn verify(bearer: &str, access_token: &str) -> bool {
     // is used to check how long ago the auth token was
     // generated. Doing this prevents users from consecutively
     // using a single auth token if trying to abuse the api
-    let time: u64 = global::get_time();
+    let time: u64 = global::get_time().as_secs();
     // Convert the token storage into a mutable variable.
     // This is required so that we can append the access_token
     // to the users token storage, or so that we can clear

@@ -1,0 +1,18 @@
+[package]
+name = "Reborn"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+sqlx = { version = "0.6", features = ["runtime-tokio-rustls", "sqlite"] }
+serde = { version = "1.0", features = ["derive"] }
+actix-web = { version =  "4" }
+
+# // Secondary Dependencies
+lazy_static = "1.4.0"
+actix-cors = "0.6.3"
+sha256 = "1.0.3"
+serde_json = "1.0"
+reqwest = "0.11"

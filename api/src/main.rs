@@ -56,7 +56,8 @@ async fn send_message_endpoint(req: HttpRequest) -> impl Responder {
 pub struct AccountBody {
     pub name: String,
     pub email: String,
-    pub password: String
+    pub password: String,
+    identifier: String
 }
 
 // The register account endpoint is used to register

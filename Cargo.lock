@@ -3,20 +3,6 @@
 version = 3
 
 [[package]]
-name = "Reborn"
-version = "0.1.0"
-dependencies = [
- "actix-cors",
- "actix-web",
- "lazy_static",
- "reqwest",
- "serde",
- "serde_json",
- "sha256",
- "sqlx",
-]
-
-[[package]]
 name = "actix-codec"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1218,6 +1204,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 dependencies = [
  "getrandom",
+]
+
+[[package]]
+name = "reborn"
+version = "0.1.0"
+dependencies = [
+ "actix-cors",
+ "actix-web",
+ "lazy_static",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sha256",
+ "sqlx",
 ]
 
 [[package]]

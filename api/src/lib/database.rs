@@ -53,8 +53,8 @@ impl Database {
 
         // Insert the user into the database
         let query = sqlx::query!(
-            "INSERT INTO users (name, email, hwid, unique_hwid_count) VALUES (?, ?, ?, ?)",
-            body.name, body.email, body.identifier, 0
+            "INSERT INTO users (name, email, hwid) VALUES (?, ?, ?)",
+            body.name, body.email, body.identifier
         ).execute(&self.conn).await;
 
         // Return query result

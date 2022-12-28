@@ -3,8 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
     id                  INTEGER PRIMARY KEY NOT NULL,
     name                TEXT NOT NULL,
     email               TEXT NOT NULL,
-    hwid                TEXT NOT NULL,
-    unique_hwid_count   INTEGER NOT NULL
+    hwid                TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS tokens (
     id                  INTEGER PRIMARY KEY NOT NULL,       -- id auto increment

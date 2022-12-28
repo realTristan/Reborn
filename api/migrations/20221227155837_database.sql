@@ -8,6 +8,13 @@ CREATE TABLE IF NOT EXISTS users (
     hwid                TEXT NOT NULL,
     unique_hwid_count   INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS tokens (
+    id                  INTEGER PRIMARY KEY NOT NULL,       -- id auto increment
+    token               TEXT NOT NULL,                      -- sha256 encoded token
+    channel             INTEGER NOT NULL,                   -- channel id
+    createdby           INTEGER NOT NULL,                   -- sha256(creator_user_id + extra_string)
+    createdat           INTEGER NOT NULL                    -- when the token was created. If the token is older then 24 hours it will be deleted
+);
 
 
 -- HWID

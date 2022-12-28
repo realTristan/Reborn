@@ -1,11 +1,5 @@
 use actix_web::HttpRequest;
 
-// Define the request client as a global variable
-lazy_static::lazy_static! {
-    static ref DISCORD_TOKEN: String = String::new();
-    static ref CLIENT: reqwest::Client = reqwest::Client::new();
-}
-
 // The get_header() function is used to bypass
 // any invalid header errors.
 pub fn get_header(req: &HttpRequest, key: &str) -> String {
@@ -36,27 +30,5 @@ pub fn generate_new_id(identifier: &str) -> String {
         .unwrap();
     // Generate a new hash using the provided
     // class hash, and the current time as nanoseconds.
-    return format!("{}:{}", identifier, time.as_nanos());
-}
-
-// Discord API Documentation
-// https://discord.com/developers/docs/resources/channel#create-message
-
-// The http_send_discord_message() function is used to 
-// send a message to a discord channel
-pub async fn http_send_discord_message(channel: &str, params: &Vec<(&str, &str)>) -> reqwest::Response {
-    return http_post(&format!("https://discord.com/api/v8/channels/{}/messages", channel), params).await;
-}
-
-// the http_post() function is used to send an http
-// post request to the provided url
-pub async fn http_post(url: &str, params: &Vec<(&str, &str)>) -> reqwest::Response {
-    return match CLIENT.post(url)
-        .header("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36")
-        .form(params)
-        .send().await 
-    {
-        Ok(r) => r,
-        Err(e) => panic!("failed to request provided url. {:?}", e),
-    };
+    return sha256::digest(format!("{}:{}", identifier, time.as_nanos()));
 }

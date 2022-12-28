@@ -24,8 +24,8 @@ async fn main() -> std::io::Result<()> {
             .service(endpoints::send_discord_message_endpoint)
 
             // Account endpoints
-            .service(endpoints::register_account_endpoint)
-            .service(endpoints::login_account_endpoint)
+            .service(endpoints::register_user_endpoint)
+            .service(endpoints::login_user_endpoint)
 
             // Token Endpoints
             .service(endpoints::get_token_endpoint)

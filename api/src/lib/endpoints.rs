@@ -4,18 +4,16 @@ use crate::lib::{global, auth, database};
 // Message Body Struct for the send message endpoint
 #[derive(serde::Deserialize)]
 pub struct MessageBody {
-    pub name: String,
-    pub email: String,
-    pub identifier: String,
-    pub hardware_info: String // Base64 encode a json of the users hardware info (open programs, etc.)
+    pub username: String,
+    pub identifier: String,     // sha256 hwid
+    pub hardware_info: String   // Base64 encode a json of the users hardware info (open programs, etc.)
 }
 
 // Account Body Struct for the account endpoints
 // and the account database functions
 #[derive(serde::Deserialize)]
 pub struct AccountBody {
-    pub name: String,
-    pub email: String,
+    pub username: String,
     pub identifier: String
 }
 
@@ -28,8 +26,8 @@ pub struct AccountBody {
 //
 // The "authorization" header is a sha256("hwid") for the following functions:
 //      send_discord_message_endpoint()
-//      register_account_endpoint()
-//      login_account_endpoint()
+//      register_user_endpoint()
+//      login_user_endpoint()
 // 
 //
 // The "authorization" header is a sha256("user_id") for the following functions:
@@ -81,7 +79,7 @@ async fn send_discord_message_endpoint(
 // is required for the user to be able to provide a bearer token
 // which will be used for verification.
 #[actix_web::put("/account/register")]
-async fn register_account_endpoint(
+async fn register_user_endpoint(
     req: HttpRequest, 
     db: web::Data<database::Database>,
     body: web::Json<AccountBody>
@@ -92,21 +90,19 @@ async fn register_account_endpoint(
     }
 
     // Register the account to the database
-    if !db.register_account_to_database(body).await {
-        return "{\"error\": \"failed to register account\"}".to_string();
-    }
-    return "{\"success\": \"successfully registered account\"}".to_string();
+    let message: String = db.register_user_to_database(&body.username, &body.identifier).await;
+    return format!("{{\"response\": \"{}\"}}", message);
 }
 
 
 
-// The login_account() endpoint is used to check whether
+// The login_user() endpoint is used to check whether
 // an account already exists for the provided hwid. 
 // If it does, then the user will automatically be logged 
 // into that account. This is used to prevent users from
 // making mulitple accounts when they don't need to.
 #[actix_web::post("/account/")]
-async fn login_account_endpoint(
+async fn login_user_endpoint(
     req: HttpRequest, 
     db: web::Data<database::Database>,
     body: web::Json<AccountBody>
@@ -118,11 +114,11 @@ async fn login_account_endpoint(
 
     // Check if the account already exists for the provided
     // body.identifier (hwid)
-    let account_exists = false;
+    let account_exists: bool = false;
     if account_exists {
-        return "{\"error\": \"an account with the provided hwid already exists\"}".to_string();
+        return format!("{{\"username\": \"{}\"}}", "the username of the user with the hwid");
     }
-    return format!("{{\"user\": \"{}\"}}", "the name of the user with the hwid");
+    return "{\"response\": \"user does not exist\"}".to_string();
 }
 
 
@@ -144,7 +140,10 @@ async fn get_token_endpoint(req: HttpRequest, db: web::Data<database::Database>)
     };
 
     // Return the generated token
-    return format!("{{\"token\": \"{}\", \"expires_in\": \"{}\"}}", "the generated token", "expiration time");
+    return format!(
+        "{{\"token\": \"{}\", \"created\": \"{}\", \"expires_in\": \"{}\"}}",
+        token, "creation time", "expiration time"
+    );
 }
 
 

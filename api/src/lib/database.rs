@@ -1,4 +1,3 @@
-use crate::lib::endpoints::AccountBody;
 
 // Database Struct for globalizing it's
 // connection variable
@@ -26,38 +25,38 @@ impl Database {
     }
 
     // The account_already_exists() function is used to check whether
-    // the provided email is already being used for an account. If it
-    // is, then the user will not be able to register with the provided email.
-    async fn account_already_exists(&self, email: &str, hwid: &str) -> bool {
+    // the provided username is already being used for an account. If it
+    // is, then the user will not be able to register with the provided username.
+    async fn account_already_exists(&self, username: &str, hwid: &str) -> bool {
         let query = sqlx::query!(
-            "SELECT email, hwid FROM users WHERE email = ? AND hwid = ?", email, hwid
+            "SELECT username, hwid FROM users WHERE username = ? AND hwid = ?", username, hwid
         ).fetch_one(&self.conn).await;
 
-        // Return whether the email already exists
+        // Return whether the user already exists
         return match query {
             Ok(_) => true,
             Err(_) => false,
         };
     }
 
-    // The register_account_to_database() function is used to
+    // The register_user_to_database() function is used to
     // register an user to the sqlite database.
-    pub async fn register_account_to_database(&self, body: actix_web::web::Json<AccountBody>) -> bool {
+    pub async fn register_user_to_database(&self, username: &str, hwid: &str) -> String {
         // Check if the account already exists
-        if self.account_already_exists(&body.email, &body.identifier).await {
-            return false;
+        if self.account_already_exists(username, hwid).await {
+            return "username already exists".to_string();
         }
 
         // Insert the user into the database
         let query = sqlx::query!(
-            "INSERT INTO users (name, email, hwid) VALUES (?, ?, ?)",
-            body.name, body.email, body.identifier
+            "INSERT INTO users (username, hwid) VALUES (?, ?)",
+            username, hwid
         ).execute(&self.conn).await;
 
         // Return query result
         return match query {
-            Ok(q) => q.rows_affected() > 0,
-            Err(_) => false,
+            Ok(_) => "successfully registered user".to_string(),
+            Err(_) => "failed to register user".to_string()
         };
     }
 
@@ -65,7 +64,7 @@ impl Database {
         // TODO
     }
 
-    pub async fn account_with_hwid_already_exists() {
+    pub async fn user_with_hwid_already_exists() {
         // TODO
     }
 

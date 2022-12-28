@@ -16,7 +16,6 @@ pub struct MessageBody {
 pub struct AccountBody {
     pub name: String,
     pub email: String,
-    pub password: String,
     pub identifier: String
 }
 
@@ -24,15 +23,15 @@ pub struct AccountBody {
 // The send message to a channel with the reborn
 // discord bot endpoint
 #[actix_web::post("/message/{channel}/")]
-async fn send_message_endpoint(
+async fn send_discord_message_endpoint(
     req: HttpRequest,
     body: web::Json<MessageBody>
 ) -> impl Responder {
     
     // Get the channel id from the url parameters
     let channel: &str = match req.match_info().get("channel") {
-        Some(channel) => channel,
-        None => return "{\"error\": \"Invalid channel id.\"}".to_string()
+        Some(c) => c,
+        None => return "{\"error\": \"invalid channel id\"}".to_string()
     };
 
     // Get the provided authorization headers
@@ -53,7 +52,7 @@ async fn send_message_endpoint(
 // an user and add them to the sqlite database. A registration
 // is required for the user to be able to provide a bearer token
 // which will be used for verification.
-#[actix_web::put("/register")]
+#[actix_web::put("/account/register")]
 async fn register_account_endpoint(
     req: HttpRequest, 
     db: web::Data<database::Database>,
@@ -76,9 +75,12 @@ async fn register_account_endpoint(
     return "{\"success\": \"successfully registered account\"}".to_string();
 }
 
-
-// The login account endpoint is used to login an user.
-#[actix_web::post("/login")]
+// The login_account() endpoint is used to check whether
+// an account already exists for the provided hwid. 
+// If it does, then the user will automatically be logged 
+// into that account. This is used to prevent users from
+// making mulitple accounts when they don't need to.
+#[actix_web::post("/account/")]
 async fn login_account_endpoint(
     req: HttpRequest, 
     db: web::Data<database::Database>,
@@ -86,30 +88,35 @@ async fn login_account_endpoint(
 ) -> impl Responder {
 
     // Get the provided authorization headers
-    let bearer: String = global::get_header(&req, "authorization");
     let access_token: String = global::get_header(&req, "access_token");
 
     // Verify the provided authorization headers
-    if !auth::verify(&bearer, &access_token) {
+    if !auth::verify(&body.identifier, &access_token) {
         return "{\"error\": \"invalid request\"}".to_string();
     }
 
-    // Return whether the password was valid or not
-    if db.valid_login_password(&body.email, &body.password).await {
-        return "{\"success\": \"valid credentials\"}".to_string();
+    // Check if the account already exists for the provided
+    // body.identifier (hwid)
+    let account_exists = false;
+    if account_exists {
+        return "{\"success\": \"an account with the provided hwid already exists\"}".to_string();
     }
-    return "{\"error\": \"invalid email or password\"}".to_string();
+    return "{\"success\": \"an account with the provided hwid does not exist\"}".to_string();
 }
 
+// The get_token() endpoint is used to get infrotmation about
+// the provided token. This includes the token channel_id, the
+// token creation_time and expiration_date, etc.
 #[actix_web::get("/token/{token}")]
-async fn get_token(
-    req: HttpRequest, 
-    db: web::Data<database::Database>,
-    body: web::Json<AccountBody>
-) -> impl Responder {
+async fn get_token_endpoint(req: HttpRequest, db: web::Data<database::Database>) -> impl Responder {
+    // Get the channel id from the url parameters
+    let token: &str = match req.match_info().get("channel") {
+        Some(t) => t,
+        None => return "{\"error\": \"invalid token\"}".to_string()
+    };
 
     // Get the provided authorization headers
-    let user_id: String = global::get_header(&req, "user_id");
+    let user_id: String = global::get_header(&req, "user_id"); // sha256 encoded discord user id
     let access_token: String = global::get_header(&req, "access_token");
 
     // Verify the provided authorization headers
@@ -125,14 +132,14 @@ async fn get_token(
 // a new vac token and insert it into the database along
 // with it's corresponding channel id and time of its creation.
 #[actix_web::put("/token")]
-async fn create_token(
+async fn create_token_endpoint(
     req: HttpRequest, 
     db: web::Data<database::Database>,
     body: web::Json<AccountBody>
 ) -> impl Responder {
 
     // Get the provided authorization headers
-    let user_id: String = global::get_header(&req, "user_id");
+    let user_id: String = global::get_header(&req, "user_id"); // sha256 encoded discord user id
     let access_token: String = global::get_header(&req, "access_token");
 
     // Verify the provided authorization headers
@@ -147,14 +154,14 @@ async fn create_token(
 // The delete_token endpoint is used to delete
 // the provided token from the database.
 #[actix_web::delete("/token")]
-async fn delete_token(
+async fn delete_token_endpoint(
     req: HttpRequest, 
     db: web::Data<database::Database>,
     body: web::Json<AccountBody>
 ) -> impl Responder {
 
     // Get the provided authorization headers
-    let user_id: String = global::get_header(&req, "user_id");
+    let user_id: String = global::get_header(&req, "user_id"); // sha256 encoded discord user id
     let access_token: String = global::get_header(&req, "access_token");
 
     // Verify the provided authorization headers

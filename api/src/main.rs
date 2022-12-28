@@ -21,12 +21,16 @@ async fn main() -> std::io::Result<()> {
             .service(main_endpoint)
             
             // Send message endpoints
-            .service(endpoints::send_message_endpoint)
+            .service(endpoints::send_discord_message_endpoint)
 
             // Account endpoints
             .service(endpoints::register_account_endpoint)
             .service(endpoints::login_account_endpoint)
 
+            // Token Endpoints
+            .service(endpoints::get_token_endpoint)
+            .service(endpoints::create_token_endpoint)
+            .service(endpoints::delete_token_endpoint)
 
     })
     .bind(("127.0.0.1", 8080))?
@@ -41,7 +45,7 @@ async fn main() -> std::io::Result<()> {
 // Thus it doesn't need to be really complicated.
 
 
-// Account Login
+// HWID Spoofers
 //
 // When the user logs in, it will check whether they have the
 // same hwid as when they first registered. If not, then it will
@@ -51,16 +55,26 @@ async fn main() -> std::io::Result<()> {
 // It will also keep track of how many unique hwids the user
 // has used. This way, mods can track whether the user is using
 // a hardware id spoofer. (what cheaters use to prevent being banned)
-//
+
+
+// Account Login
 //
 // To make sure the user doesn't just make a different account each time
-// they use the anti-cheat, there will be no signout button, thus the user
-// must reinstall the program all over again to signout.
-//
+// they use the anti-cheat, there will be no signout button.
 //
 // When the user first installs the program, it will check if an account is
-// already registered with their hwid, if it is, it will automatically sign in
+// already registered with their hwid, if one is, it will automatically sign in
 // using the account registered to that hwid.
+//
+//
+// No password. Just an username, email, and hwid.
+//
+// When an user registers an account, if the api request is successfully, switch
+// from the register page to the actual anti-cheat page. Else, display an error.
+//
+// When a user launches the app, it will check if an account is already registered with
+// the users hwid, if so, it will send the user to the anti-cheat page.
+
 
 
 // Discord Channel Tokens

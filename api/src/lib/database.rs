@@ -102,12 +102,20 @@ impl Database {
         // TODO
     }
 
+    pub async fn get_token() {
+        // TODO
+        // get the token creator, expiration date, channel id, etc.
+    }
+
     pub async fn create_token() {
         // TODO
+        // generate a new token hash
+        // insert the token into the database
     }
 
     pub async fn delete_token() {
         // TODO
+        // delete the token from the database
     }
 
 }

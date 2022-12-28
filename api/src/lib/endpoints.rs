@@ -101,22 +101,42 @@ async fn login_account_endpoint(
     return "{\"error\": \"invalid email or password\"}".to_string();
 }
 
-// The create_new_token endpoint is used to generate
-// a new vac token and insert it into the database along
-// with it's corresponding channel id and time of its creation.
-#[actix_web::put("/token")]
-async fn create_new_token(
+#[actix_web::get("/token/{token}")]
+async fn get_token(
     req: HttpRequest, 
     db: web::Data<database::Database>,
     body: web::Json<AccountBody>
 ) -> impl Responder {
 
     // Get the provided authorization headers
-    let bearer: String = global::get_header(&req, "authorization");
+    let user_id: String = global::get_header(&req, "user_id");
     let access_token: String = global::get_header(&req, "access_token");
 
     // Verify the provided authorization headers
-    if !auth::verify(&bearer, &access_token) {
+    if !auth::verify(&user_id, &access_token) {
+        return "{\"error\": \"invalid request\"}".to_string();
+    }
+
+    // Return the generated token
+    return format!("{{\"token\": \"{}\", \"expires_in\": \"{}\"}}", "the generated token", "expiration time");
+}
+
+// The create_token endpoint is used to generate
+// a new vac token and insert it into the database along
+// with it's corresponding channel id and time of its creation.
+#[actix_web::put("/token")]
+async fn create_token(
+    req: HttpRequest, 
+    db: web::Data<database::Database>,
+    body: web::Json<AccountBody>
+) -> impl Responder {
+
+    // Get the provided authorization headers
+    let user_id: String = global::get_header(&req, "user_id");
+    let access_token: String = global::get_header(&req, "access_token");
+
+    // Verify the provided authorization headers
+    if !auth::verify(&user_id, &access_token) {
         return "{\"error\": \"invalid request\"}".to_string();
     }
 
@@ -134,11 +154,11 @@ async fn delete_token(
 ) -> impl Responder {
 
     // Get the provided authorization headers
-    let bearer: String = global::get_header(&req, "authorization");
+    let user_id: String = global::get_header(&req, "user_id");
     let access_token: String = global::get_header(&req, "access_token");
 
     // Verify the provided authorization headers
-    if !auth::verify(&bearer, &access_token) {
+    if !auth::verify(&user_id, &access_token) {
         return "{\"error\": \"invalid request\"}".to_string();
     }
 

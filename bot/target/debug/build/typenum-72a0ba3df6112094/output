@@ -1,3 +1,0 @@
-cargo:rerun-if-changed=build/main.rs
-cargo:rustc-env=TYPENUM_BUILD_CONSTS=c:\Users\Admin\Desktop\Reborn\bot\target\debug\build\typenum-72a0ba3df6112094\out\consts.rs
-cargo:rustc-env=TYPENUM_BUILD_OP=c:\Users\Admin\Desktop\Reborn\bot\target\debug\build\typenum-72a0ba3df6112094\out\op.rs

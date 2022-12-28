@@ -1,7 +1,4 @@
-use crate::lib::{
-    endpoints::AccountBody, 
-    global
-};
+use crate::lib::endpoints::AccountBody;
 
 // Database Struct for globalizing it's
 // connection variable

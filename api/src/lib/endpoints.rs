@@ -19,6 +19,38 @@ pub struct AccountBody {
     pub identifier: String
 }
 
+// The request_guard() function is used to check whether
+// the request is from a valid source. This is done by grabbing
+// the authorization and the access_token headers then using the
+// auth::verify() function to check whether the provided tokens
+// are valid.
+//
+//
+// The "authorization" header is a sha256("hwid") for the following functions:
+//      send_discord_message_endpoint()
+//      register_account_endpoint()
+//      login_account_endpoint()
+// 
+//
+// The "authorization" header is a sha256("user_id") for the following functions:
+//      get_token_endpoint()
+//      create_token_endpoint()
+//      delete_token_endpoint()
+//
+//
+// The "access_token" header is a sha256("{authorization_header}:{time_in_seconds}:{SUPER_SECRET_CODE}")
+//
+// The request_guard() function returns a bool for whether the request is valid.
+fn request_guard(req: &HttpRequest) -> bool {
+    // Get the provided authorization headers
+    let auth: String = global::get_header(req, "authorization");
+    let access_token: String = global::get_header(req, "access_token");
+
+    // Verify the provided authorization headers
+    return auth::verify(&auth, &access_token)
+}
+
+
 
 // The send message to a channel with the reborn
 // discord bot endpoint
@@ -27,25 +59,21 @@ async fn send_discord_message_endpoint(
     req: HttpRequest,
     body: web::Json<MessageBody>
 ) -> impl Responder {
+    // Check if the reuqest is from a valid source
+    if !request_guard(&req) {
+        return "{\"error\": \"invalid request\"}".to_string();
+    }
     
     // Get the channel id from the url parameters
     let channel: &str = match req.match_info().get("channel") {
         Some(c) => c,
         None => return "{\"error\": \"invalid channel id\"}".to_string()
     };
-
-    // Get the provided authorization headers
-    let bearer: String = global::get_header(&req, "authorization");
-    let access_token: String = global::get_header(&req, "access_token");
-
-    // Verify the provided authorization headers
-    if !auth::verify(&bearer, &access_token) {
-        return "{\"error\": \"invalid request\"}".to_string();
-    }
     
     // Response String
     return format!("{{\"success\": \"message sent to {}\"}}", channel);
 }
+
 
 
 // The register account endpoint is used to register
@@ -58,13 +86,8 @@ async fn register_account_endpoint(
     db: web::Data<database::Database>,
     body: web::Json<AccountBody>
 ) -> impl Responder {
-
-    // Get the provided authorization headers
-    let bearer: String = global::get_header(&req, "authorization");
-    let access_token: String = global::get_header(&req, "access_token");
-
-    // Verify the provided authorization headers
-    if !auth::verify(&bearer, &access_token) {
+    // Check if the reuqest is from a valid source
+    if !request_guard(&req) {
         return "{\"error\": \"invalid request\"}".to_string();
     }
 
@@ -74,6 +97,8 @@ async fn register_account_endpoint(
     }
     return "{\"success\": \"successfully registered account\"}".to_string();
 }
+
+
 
 // The login_account() endpoint is used to check whether
 // an account already exists for the provided hwid. 
@@ -86,12 +111,8 @@ async fn login_account_endpoint(
     db: web::Data<database::Database>,
     body: web::Json<AccountBody>
 ) -> impl Responder {
-
-    // Get the provided authorization headers
-    let access_token: String = global::get_header(&req, "access_token");
-
-    // Verify the provided authorization headers
-    if !auth::verify(&body.identifier, &access_token) {
+    // Check if the reuqest is from a valid source
+    if !request_guard(&req) {
         return "{\"error\": \"invalid request\"}".to_string();
     }
 
@@ -104,29 +125,29 @@ async fn login_account_endpoint(
     return "{\"success\": \"an account with the provided hwid does not exist\"}".to_string();
 }
 
+
+
 // The get_token() endpoint is used to get infrotmation about
 // the provided token. This includes the token channel_id, the
 // token creation_time and expiration_date, etc.
 #[actix_web::get("/token/{token}")]
 async fn get_token_endpoint(req: HttpRequest, db: web::Data<database::Database>) -> impl Responder {
+    // Check if the reuqest is from a valid source
+    if !request_guard(&req) {
+        return "{\"error\": \"invalid request\"}".to_string();
+    }
+
     // Get the channel id from the url parameters
     let token: &str = match req.match_info().get("channel") {
         Some(t) => t,
         None => return "{\"error\": \"invalid token\"}".to_string()
     };
 
-    // Get the provided authorization headers
-    let user_id: String = global::get_header(&req, "user_id"); // sha256 encoded discord user id
-    let access_token: String = global::get_header(&req, "access_token");
-
-    // Verify the provided authorization headers
-    if !auth::verify(&user_id, &access_token) {
-        return "{\"error\": \"invalid request\"}".to_string();
-    }
-
     // Return the generated token
     return format!("{{\"token\": \"{}\", \"expires_in\": \"{}\"}}", "the generated token", "expiration time");
 }
+
+
 
 // The create_token endpoint is used to generate
 // a new vac token and insert it into the database along
@@ -137,19 +158,16 @@ async fn create_token_endpoint(
     db: web::Data<database::Database>,
     body: web::Json<AccountBody>
 ) -> impl Responder {
-
-    // Get the provided authorization headers
-    let user_id: String = global::get_header(&req, "user_id"); // sha256 encoded discord user id
-    let access_token: String = global::get_header(&req, "access_token");
-
-    // Verify the provided authorization headers
-    if !auth::verify(&user_id, &access_token) {
+    // Check if the reuqest is from a valid source
+    if !request_guard(&req) {
         return "{\"error\": \"invalid request\"}".to_string();
     }
 
     // Return the generated token
     return format!("{{\"token\": \"{}\"}}", "the generated token");
 }
+
+
 
 // The delete_token endpoint is used to delete
 // the provided token from the database.
@@ -159,13 +177,8 @@ async fn delete_token_endpoint(
     db: web::Data<database::Database>,
     body: web::Json<AccountBody>
 ) -> impl Responder {
-
-    // Get the provided authorization headers
-    let user_id: String = global::get_header(&req, "user_id"); // sha256 encoded discord user id
-    let access_token: String = global::get_header(&req, "access_token");
-
-    // Verify the provided authorization headers
-    if !auth::verify(&user_id, &access_token) {
+    // Check if the reuqest is from a valid source
+    if !request_guard(&req) {
         return "{\"error\": \"invalid request\"}".to_string();
     }
 

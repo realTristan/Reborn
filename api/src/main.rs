@@ -27,10 +27,22 @@ async fn main_endpoint(_req: HttpRequest) -> impl Responder {
     return "Welcome to the Reborn API!"
 }
 
+// Message Body Struct for the send message endpoint
+#[derive(serde::Deserialize)]
+pub struct MessageBody {
+    pub name: String,
+    pub email: String,
+    pub identifier: String,
+    pub hardware_info: String // Base64 encode a json of the users hardware info (open programs, etc.)
+}
+
 // The send message to a channel with the reborn
 // discord bot endpoint
 #[actix_web::post("/send/message/{channel}/")]
-async fn send_message_endpoint(req: HttpRequest) -> impl Responder {
+async fn send_message_endpoint(
+    req: HttpRequest,
+    body: web::Json<MessageBody>
+) -> impl Responder {
     // Get the channel id from the url parameters
     let channel: &str = match req.match_info().get("channel") {
         Some(channel) => channel,
@@ -57,7 +69,7 @@ pub struct AccountBody {
     pub name: String,
     pub email: String,
     pub password: String,
-    identifier: String
+    pub identifier: String
 }
 
 // The register account endpoint is used to register

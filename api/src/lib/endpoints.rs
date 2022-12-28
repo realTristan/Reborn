@@ -120,9 +120,9 @@ async fn login_account_endpoint(
     // body.identifier (hwid)
     let account_exists = false;
     if account_exists {
-        return "{\"success\": \"an account with the provided hwid already exists\"}".to_string();
+        return "{\"error\": \"an account with the provided hwid already exists\"}".to_string();
     }
-    return "{\"success\": \"an account with the provided hwid does not exist\"}".to_string();
+    return format!("{{\"user\": \"{}\"}}", "the name of the user with the hwid");
 }
 
 

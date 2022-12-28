@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- HWID
 --
+-- The hwid is sha256 encrypted
 -- Change the hwid field if the hwid is different then increase the unique_hwid_count by 1
 
 

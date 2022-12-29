@@ -18,6 +18,22 @@ lazy_static::lazy_static! {
     };
 }
 
+//
+// The "authorization" header is a sha256("hwid") for the following functions:
+//      send_discord_message_endpoint()
+//      register_user_endpoint()
+//      login_user_endpoint()
+// 
+//
+// The "authorization" header is a sha256("user_id") for the following functions:
+//      get_token_endpoint()
+//      create_token_endpoint()
+//      delete_token_endpoint()
+//
+//
+// The "access_token" header is a sha256("{authorization_header}:{time_in_seconds}:{SUPER_SECRET_CODE}")
+//
+
 // The verify() function is used to check whether the
 // provided auth token is valid. It does this by
 // checking whether the token has been created within

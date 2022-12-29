@@ -1,6 +1,11 @@
-use actix_web::{self, web, App, HttpRequest, HttpServer, Responder};
 mod lib;
-use lib::{database, endpoints};
+use lib::{
+    endpoints, handlers::Database
+};
+use actix_web::{
+    self, web, App, HttpRequest, HttpServer, Responder
+};
+
 
 // The default endpoint
 #[actix_web::get("/")]
@@ -14,7 +19,7 @@ async fn main_endpoint(_req: HttpRequest) -> impl Responder {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // Establish a connection to the database
-    let db: database::Database = database::Database::init().await;
+    let db: Database = Database::init().await;
 
     // Establish a connection to http://127.0.0.1:8080/
     HttpServer::new(move || {
@@ -24,16 +29,16 @@ async fn main() -> std::io::Result<()> {
             .service(main_endpoint)
             
             // Send message endpoints
-            .service(endpoints::send_discord_message_endpoint)
+            .service(endpoints::discord::send_discord_message_endpoint)
 
             // Account endpoints
-            .service(endpoints::register_user_endpoint)
-            .service(endpoints::login_user_endpoint)
+            .service(endpoints::accounts::register_user_endpoint)
+            .service(endpoints::accounts::login_user_endpoint)
 
             // Token Endpoints
-            .service(endpoints::get_token_endpoint)
-            .service(endpoints::generate_token_endpoint)
-            .service(endpoints::delete_token_endpoint)
+            .service(endpoints::tokens::get_token_endpoint)
+            .service(endpoints::tokens::generate_token_endpoint)
+            .service(endpoints::tokens::delete_token_endpoint)
 
     })
     .bind(("127.0.0.1", 8080))?

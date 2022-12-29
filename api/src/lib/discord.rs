@@ -19,9 +19,9 @@ static DISCORD_TOKEN: &str = "";
 pub async fn send_message(channel: i64, body: web::Json<MessageBody>) -> Option<reqwest::Response> {
     return match CLIENT.post(&format!("https://discord.com/api/v8/channels/{}/messages", channel))
         .header("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36")
-        .header("authorization", DISCORD_TOKEN)
+        .header("authorization", format!("Bot {}", DISCORD_TOKEN))
         .form(
-            &vec![("content", "Hello, world!")]
+            &vec![("content", "Reborn API Request")]
         )
         .send().await 
     {

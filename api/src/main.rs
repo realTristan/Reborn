@@ -29,7 +29,7 @@ async fn main() -> std::io::Result<()> {
 
             // Token Endpoints
             .service(endpoints::get_token_endpoint)
-            .service(endpoints::create_token_endpoint)
+            .service(endpoints::generate_token_endpoint)
             .service(endpoints::delete_token_endpoint)
 
     })

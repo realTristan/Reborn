@@ -17,12 +17,14 @@ pub struct AccountBody {
     pub identifier: String
 }
 
-// The request_guard() function is used to check whether
-// the request is from a valid source. This is done by grabbing
-// the authorization and the access_token headers then using the
-// auth::verify() function to check whether the provided tokens
-// are valid.
-//
+// Token Body Struct for the token endpoints
+#[derive(serde::Deserialize)]
+pub struct TokenBody {
+    pub token: String,
+    pub channel: i64
+}
+
+
 //
 // The "authorization" header is a sha256("hwid") for the following functions:
 //      send_discord_message_endpoint()
@@ -38,27 +40,28 @@ pub struct AccountBody {
 //
 // The "access_token" header is a sha256("{authorization_header}:{time_in_seconds}:{SUPER_SECRET_CODE}")
 //
-// The request_guard() function returns a bool for whether the request is valid.
-fn request_guard(req: &HttpRequest) -> bool {
-    // Get the provided authorization headers
-    let auth: String = global::get_header(req, "authorization");
-    let access_token: String = global::get_header(req, "access_token");
-
-    // Verify the provided authorization headers
-    return auth::verify(&auth, &access_token)
-}
-
 
 
 // The send message to a channel with the reborn
-// discord bot endpoint
+// discord bot endpoint. This is different from the
+// original Versa Anti Cheat which used a discord webhook.
+// Discord webhooks are not secure and can be easily tampered with
+// thus having our own private api and using a discord bot is
+// much more secure.
 #[actix_web::post("/message/{channel}/")]
 async fn send_discord_message_endpoint(
-    req: HttpRequest,
+    req: HttpRequest, 
     body: web::Json<MessageBody>
-) -> impl Responder {
-    // Check if the reuqest is from a valid source
-    if !request_guard(&req) {
+) -> impl Responder 
+{
+
+    // Get the provided authorization headers
+    // Authorization: sha256("hwid")
+    let auth: String = global::get_header(&req, "authorization");
+    let access_token: String = global::get_header(&req, "access_token");
+
+    // Verify the provided authorization headers
+    if !auth::verify(&auth, &access_token) {
         return "{\"error\": \"invalid request\"}".to_string();
     }
     
@@ -78,20 +81,33 @@ async fn send_discord_message_endpoint(
 // an user and add them to the sqlite database. A registration
 // is required for the user to be able to provide a bearer token
 // which will be used for verification.
-#[actix_web::put("/account/register")]
+#[actix_web::put("/account/register/")]
 async fn register_user_endpoint(
     req: HttpRequest, 
     db: web::Data<database::Database>,
     body: web::Json<AccountBody>
-) -> impl Responder {
-    // Check if the reuqest is from a valid source
-    if !request_guard(&req) {
+) -> impl Responder 
+{
+    // Get the provided authorization headers
+    // Authorization: sha256("hwid")
+    let auth: String = global::get_header(&req, "authorization");
+    let access_token: String = global::get_header(&req, "access_token");
+
+    // Verify the provided authorization headers
+    if !auth::verify(&auth, &access_token) {
         return "{\"error\": \"invalid request\"}".to_string();
     }
 
+    // Check if the account already exists
+    if db.account_already_exists(&body.username, &body.identifier).await {
+        return "{\"error\": \"username already exists\"}".to_string();
+    }
+
     // Register the account to the database
-    let message: String = db.register_user_to_database(&body.username, &body.identifier).await;
-    return format!("{{\"response\": \"{}\"}}", message);
+    if db.register_user_to_database(&body.username, &body.identifier).await {
+        return "{\"success\": \"account registered\"}".to_string();
+    }
+    return "{\"error\": \"failed to register account\"}".to_string();
 }
 
 
@@ -106,19 +122,24 @@ async fn login_user_endpoint(
     req: HttpRequest, 
     db: web::Data<database::Database>,
     body: web::Json<AccountBody>
-) -> impl Responder {
-    // Check if the reuqest is from a valid source
-    if !request_guard(&req) {
+) -> impl Responder 
+{
+    // Get the provided authorization headers
+    // Authorization: sha256("hwid")
+    let auth: String = global::get_header(&req, "authorization");
+    let access_token: String = global::get_header(&req, "access_token");
+
+    // Verify the provided authorization headers
+    if !auth::verify(&auth, &access_token) {
         return "{\"error\": \"invalid request\"}".to_string();
     }
 
     // Check if the account already exists for the provided
     // body.identifier (hwid)
-    let account_exists: bool = false;
-    if account_exists {
-        return format!("{{\"username\": \"{}\"}}", "the username of the user with the hwid");
-    }
-    return "{\"response\": \"user does not exist\"}".to_string();
+    return match db.account_hwid_exists(&body.identifier).await {
+        Some(username) => format!("{{\"username\": \"{}\"}}", username),
+        None => "{\"error\": \"user does not exist\"}".to_string()
+    };
 }
 
 
@@ -126,23 +147,38 @@ async fn login_user_endpoint(
 // The get_token() endpoint is used to get infrotmation about
 // the provided token. This includes the token channel_id, the
 // token creation_time and expiration_date, etc.
-#[actix_web::get("/token/{token}")]
-async fn get_token_endpoint(req: HttpRequest, db: web::Data<database::Database>) -> impl Responder {
-    // Check if the reuqest is from a valid source
-    if !request_guard(&req) {
+#[actix_web::get("/token/{token}/")]
+async fn get_token_endpoint(
+    req: HttpRequest, 
+    db: web::Data<database::Database>
+) -> impl Responder 
+{
+    // Get the provided authorization headers
+    // Authorization: sha256("user_id")
+    let auth: String = global::get_header(&req, "authorization");
+    let access_token: String = global::get_header(&req, "access_token");
+
+    // Verify the provided authorization headers
+    if !auth::verify(&auth, &access_token) {
         return "{\"error\": \"invalid request\"}".to_string();
     }
 
     // Get the channel id from the url parameters
-    let token: &str = match req.match_info().get("channel") {
+    let token: &str = match req.match_info().get("token") {
         Some(t) => t,
         None => return "{\"error\": \"invalid token\"}".to_string()
     };
 
+    // Get the token information from the database
+    let data = match db.get_token(token).await {
+        Some(t) => t,
+        None => return "{\"error\": \"token is invalid or has expired\"}".to_string()
+    };
+
     // Return the generated token
     return format!(
-        "{{\"token\": \"{}\", \"created\": \"{}\", \"expires_in\": \"{}\"}}",
-        token, "creation time", "expiration time"
+        "{{\"token\": \"{}\", \"channel\": \"{}\", \"created_by\": \"{}\", \"created_at\": \"{}\", \"expires_in\": \"{}\"}}",
+        token, data.channel, data.created_at, data.created_by, data.expires_in.to_string()
     );
 }
 
@@ -151,36 +187,58 @@ async fn get_token_endpoint(req: HttpRequest, db: web::Data<database::Database>)
 // The create_token endpoint is used to generate
 // a new vac token and insert it into the database along
 // with it's corresponding channel id and time of its creation.
-#[actix_web::put("/token")]
-async fn create_token_endpoint(
+#[actix_web::put("/token/")]
+async fn generate_token_endpoint(
     req: HttpRequest, 
     db: web::Data<database::Database>,
-    body: web::Json<AccountBody>
-) -> impl Responder {
-    // Check if the reuqest is from a valid source
-    if !request_guard(&req) {
+    body: web::Json<TokenBody>
+) -> impl Responder 
+{
+    // Get the provided authorization headers
+    // Authorization: sha256("user_id")
+    let auth: String = global::get_header(&req, "authorization");
+    let access_token: String = global::get_header(&req, "access_token");
+
+    // Verify the provided authorization headers
+    if !auth::verify(&auth, &access_token) {
         return "{\"error\": \"invalid request\"}".to_string();
     }
 
-    // Return the generated token
-    return format!("{{\"token\": \"{}\"}}", "the generated token");
+    // Generate a new token
+    let token = match db.generate_token(body.channel, &auth).await {
+        Some(t) => t,
+        None => return "{\"error\": \"failed to generate token\"}".to_string()
+    };
+
+    // Return the success json
+    return format!("{{\"token\": \"{}\"}}", token);
 }
 
 
 
 // The delete_token endpoint is used to delete
 // the provided token from the database.
-#[actix_web::delete("/token")]
+#[actix_web::delete("/token/")]
 async fn delete_token_endpoint(
     req: HttpRequest, 
     db: web::Data<database::Database>,
-    body: web::Json<AccountBody>
-) -> impl Responder {
-    // Check if the reuqest is from a valid source
-    if !request_guard(&req) {
+    body: web::Json<TokenBody>
+) -> impl Responder 
+{
+    // Get the provided authorization headers
+    // Authorization: sha256("user_id")
+    let auth: String = global::get_header(&req, "authorization");
+    let access_token: String = global::get_header(&req, "access_token");
+
+    // Verify the provided authorization headers
+    if !auth::verify(&auth, &access_token) {
         return "{\"error\": \"invalid request\"}".to_string();
     }
 
-    // Return the generated token
-    return "{\"success\": \"token deleted\"}".to_string();
+    // Delete the token from the database
+    if db.delete_token(&body.token, &auth).await {
+        return "{\"success\": \"token deleted\"}".to_string();
+    }
+    // Else, if the token could not be deleted, return the error json
+    return "{\"error\": \"failed to delete token\"}".to_string();
 }

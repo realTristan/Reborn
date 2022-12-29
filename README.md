@@ -2,13 +2,13 @@
 Versa Anti-Cheat Reborn using Rust instead of Python
 
 # Program
-### Screens
+## Screens
 - Login Screen
 - Enter Token and See Logs Screen (Like Versa)
 - File Hash Checker Screen
 
 # Discord Bot
-## #Commands
+## Commands
 /token create
 /token delete {token}
 /token info {token}

@@ -1,5 +1,5 @@
 use actix_web::{Responder, HttpRequest, web};
-use crate::lib::{global, auth, database};
+use crate::lib::{global, auth, database, discord};
 
 // Message Body Struct for the send message endpoint
 #[derive(serde::Deserialize)]
@@ -48,9 +48,10 @@ pub struct TokenBody {
 // Discord webhooks are not secure and can be easily tampered with
 // thus having our own private api and using a discord bot is
 // much more secure.
-#[actix_web::post("/message/{channel}/")]
+#[actix_web::post("/message/{token}/")]
 async fn send_discord_message_endpoint(
-    req: HttpRequest, 
+    req: HttpRequest,
+    db: web::Data<database::Database>,
     body: web::Json<MessageBody>
 ) -> impl Responder 
 {
@@ -65,14 +66,20 @@ async fn send_discord_message_endpoint(
         return "{\"error\": \"invalid request\"}".to_string();
     }
     
-    // Get the channel id from the url parameters
-    let channel: &str = match req.match_info().get("channel") {
-        Some(c) => c,
-        None => return "{\"error\": \"invalid channel id\"}".to_string()
+    // Get the token from the url parameters
+    let token = match req.match_info().get("token") {
+        Some(t) => match db.get_token(t).await {
+            Some(t) => t,
+            None => return "{\"error\": \"unable to fetch token data\"}".to_string()
+        },
+        None => return "{\"error\": \"invalid token\"}".to_string()
     };
+
+    // Send the message to the discord channel via their api
+    discord::send_message(token.channel, body).await;
     
     // Response String
-    return format!("{{\"success\": \"message sent to {}\"}}", channel);
+    return format!("{{\"success\": \"message sent to {}\"}}", token.channel);
 }
 
 

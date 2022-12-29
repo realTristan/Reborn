@@ -19,7 +19,7 @@ async fn get_token_endpoint(
     // Verify the provided authorization headers
     if !auth::verify(&auth, &access_token) {
         return serde_json::json!({
-            "status": "400",
+            "status": 400,
             "response": "Invalid request"
         }).to_string()
     }
@@ -28,29 +28,26 @@ async fn get_token_endpoint(
     let token: &str = match req.match_info().get("token") {
         Some(t) => t,
         None => return serde_json::json!({
-            "status": "400",
+            "status": 400,
             "response": "Invalid token"
         }).to_string()
     };
 
     // Get the token information from the database
-    let data = match db.get_token(token).await {
-        Some(t) => t,
-        None => return serde_json::json!({
-            "status": "400",
+    return match db.get_token(token).await {
+        Some(data) => serde_json::json!({
+            "status": 200,
+            "token": token,
+            "channel": data.channel,
+            "created_by": data.created_by,
+            "created_at": data.created_at,
+            "expires_in": data.expires_in.to_string()
+        }).to_string(),
+        None => serde_json::json!({
+            "status": 400,
             "response": "Token invalid or expired"
         }).to_string()
     };
-
-    // Return the generated token
-    return serde_json::json!({
-        "status": "200",
-        "token": token,
-        "channel": data.channel,
-        "created_by": data.created_by,
-        "created_at": data.created_at,
-        "expires_in": data.expires_in.to_string()
-    }).to_string();
 }
 
 
@@ -70,25 +67,22 @@ async fn generate_token_endpoint(
     // Verify the provided authorization headers
     if !auth::verify(&auth, &access_token) {
         return serde_json::json!({
-            "status": "400",
+            "status": 400,
             "response": "Invalid request"
         }).to_string()
     }
 
     // Generate a new token
-    let token = match db.generate_token(body.channel, &auth).await {
-        Some(t) => t,
+    return match db.generate_token(body.channel, &auth).await {
+        Some(t) => serde_json::json!({
+            "status": 400,
+            "token": t
+        }).to_string(),
         None => return serde_json::json!({
-            "status": "400",
+            "status": 400,
             "response": "Failed to generate token"
         }).to_string()
     };
-
-    // Return the success json
-    return serde_json::json!({
-        "status": "400",
-        "token": token
-    }).to_string()
 }
 
 
@@ -107,20 +101,20 @@ async fn delete_token_endpoint(
     // Verify the provided authorization headers
     if !auth::verify(&auth, &access_token) {
         return serde_json::json!({
-            "status": "400",
+            "status": 400,
             "response": "Invalid request"
         }).to_string()
     }
 
     // Delete the token from the database
-    if !db.delete_token(&body.token, &auth).await {
-        return serde_json::json!({
-            "status": "400",
+    return match db.delete_token(&body.token, &auth).await {
+        true => serde_json::json!({
+            "status": 200,
+            "response": "Token deleted"
+        }).to_string(),
+        false => serde_json::json!({
+            "status": 400,
             "response": "Failed to delete token"
         }).to_string()
     }
-    return serde_json::json!({
-        "status": "200",
-        "response": "Token deleted"
-    }).to_string();
 }

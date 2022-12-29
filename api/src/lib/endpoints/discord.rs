@@ -16,17 +16,23 @@ lazy_static::lazy_static! {
 // anti-cheat data to the provided discord channel.
 // The data includes the users running programs, the
 // a screenshot of the users screen, the users hwid, etc.
-async fn send_message(channel: i64, body: web::Json<MessageBody>) -> Option<reqwest::Response> {
+async fn send_message(channel: i64, body: web::Json<MessageBody>) -> Result<String, ()> {
     // Create the form data
-    let mut form = vec![];
+    let mut form: Vec<(&str, String)> = Vec::new();
     if body.image.len() > 0 {
-        form.push(("file", &body.image));
+        form.push(("file", body.image.clone()));
     };
     if body.hardware_info.len() > 0 {
-        form.push(("file", &body.hardware_info));
+        match base64::decode(&body.hardware_info) {
+            Ok(data) => match std::str::from_utf8(&data) {
+                Ok(s) => form.push(("hardware_info", s.to_string())),
+                Err(_) => return Err(())
+            },
+            Err(_) => return Err(())
+        };
     };
     if body.embed.len() > 0 {
-        form.push(("embeds", &body.embed));
+        form.push(("embeds", body.embed.clone()));
     }
 
     // Send the http request
@@ -36,8 +42,11 @@ async fn send_message(channel: i64, body: web::Json<MessageBody>) -> Option<reqw
         .form(&form)
         .send().await 
     {
-        Ok(r) => Some(r),
-        Err(_) => None
+        Ok(r) => match r.text().await {
+            Ok(t) => Ok(t),
+            Err(_) => Err(())
+        },
+        Err(_) => Err(())
     };
 }
 
@@ -60,7 +69,10 @@ async fn send_discord_message_endpoint(
 
     // Verify the provided authorization headers
     if !auth::verify(&auth, &access_token) {
-        return "{\"error\": \"invalid request\"}".to_string();
+        return serde_json::json!({
+            "status": 400,
+            "response": "Invalid request"
+        }).to_string()
     }
     
     // Get the token from the url parameters
@@ -68,22 +80,22 @@ async fn send_discord_message_endpoint(
         Some(t) => match db.get_token(t).await {
             Some(t) => t,
             None => return serde_json::json!({
-                "status": "400",
+                "status": 400,
                 "response": "Failed to fetch token data"
             }).to_string()
         },
         None => return serde_json::json!({
-            "status": "400",
+            "status": 400,
             "response": "Invalid token"
         }).to_string()
     };
 
     // Send the message to the discord channel via their api
-    send_message(token.channel, body).await;
-    
-    // Response String
-    return serde_json::json!({
-        "status": "200",
-        "response": format!("Message sent to: {}", token.channel)
-    }).to_string();
+    return match send_message(token.channel, body).await {
+        Ok(r) => r,
+        Err(_) => serde_json::json!({
+            "status": 400,
+            "response": "Failed to send message"
+        }).to_string()
+    };
 }

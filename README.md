@@ -9,9 +9,9 @@ Versa Anti-Cheat Reborn using Rust instead of Python
 
 # Discord Bot
 ## Commands
-/token create
-/token delete {token}
-/token info {token}
+- /token create
+- /token delete {token}
+- /token info {token}
 
 ### Functionalities
 Sends users screenshots and running programs to channels

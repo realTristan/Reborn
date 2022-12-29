@@ -8,13 +8,13 @@ Versa Anti-Cheat Reborn using Rust instead of Python
 - File Hash Checker Screen
 
 # Discord Bot
+Sends users screenshots and running programs to channels
+
 ## Commands
 - /token create
 - /token delete {token}
 - /token info {token}
 
-### Functionalities
-Sends users screenshots and running programs to channels
 
 
 # API Documentation

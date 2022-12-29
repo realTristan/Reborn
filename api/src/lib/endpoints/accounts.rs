@@ -47,7 +47,6 @@ async fn register_user_endpoint(
 }
 
 
-
 // The login_user() endpoint is used to check whether
 // an account already exists for the provided hwid. 
 // If it does, then the user will automatically be logged 
@@ -84,4 +83,3 @@ async fn login_user_endpoint(
         }).to_string()
     };
 }
-

@@ -4,9 +4,9 @@ use actix_web::HttpRequest;
 // any invalid header errors.
 pub fn get_header(req: &HttpRequest, key: &str) -> String {
     return match req.headers().get(key) {
-        Some(v) => v,
+        Some(h) => h.to_str().unwrap().to_string(),
         None => return "".to_string(),
-    }.to_str().unwrap().to_string();
+    };
 }
 
 // The get_time() function is used to quickly

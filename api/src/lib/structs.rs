@@ -1,5 +1,3 @@
-
-
 // Token Struct for the token database functions
 pub struct Token {
     pub channel: i64,

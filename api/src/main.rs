@@ -6,7 +6,6 @@ use actix_web::{
     self, web, App, HttpRequest, HttpServer, Responder
 };
 
-
 // The default endpoint
 #[actix_web::get("/")]
 async fn main_endpoint(_req: HttpRequest) -> impl Responder {

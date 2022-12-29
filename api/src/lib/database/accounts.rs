@@ -20,7 +20,6 @@ impl Database {
         };
     }
 
-
     // The account_already_exists() function is used to check whether
     // the provided username is already being used for an account. If it
     // is, then the user will not be able to register with the provided username.

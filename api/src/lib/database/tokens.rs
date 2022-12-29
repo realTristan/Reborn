@@ -43,7 +43,6 @@ impl Database {
         };
     }
 
-
     // The token_exists() function is used to check whether
     // the provided token exists in the database.
     async fn token_exists(&self, token: &str) -> bool 
@@ -58,7 +57,6 @@ impl Database {
             Err(_) => false
         }
     }
-
 
     // The generate_token() function is used to generate a new token
     // and insert it into the database. If the insertion fails, then the

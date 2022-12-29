@@ -1,4 +1,3 @@
-
 // Database Struct for globalizing it's
 // connection variable
 #[derive(Clone)]

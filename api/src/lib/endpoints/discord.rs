@@ -87,4 +87,3 @@ async fn send_discord_message_endpoint(
         "response": format!("Message sent to: {}", token.channel)
     }).to_string();
 }
-

@@ -5,7 +5,10 @@ use lib::{database, endpoints};
 // The default endpoint
 #[actix_web::get("/")]
 async fn main_endpoint(_req: HttpRequest) -> impl Responder {
-    return "Welcome to the Reborn API!"
+    return serde_json::json!({
+        "status": "200",
+        "response": "Welcome to the Reborn Anti-Cheat API!"
+    }).to_string();
 }
 
 #[actix_web::main]

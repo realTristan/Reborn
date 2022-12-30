@@ -9,10 +9,10 @@ Versa Anti-Cheat Reborn using Rust instead of Python
 - Multithreading
 - Screenshots + Hardware Info
 - Send API Requests
-- Login / Register Screen
-- Find a way to make ui functions async
 
-- Discord Bot Commands
+
+- Login / Register API Requests
+- Find a way to make ui functions async
 
 
 # Program

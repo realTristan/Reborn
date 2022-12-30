@@ -3,7 +3,7 @@ use lib::{
     endpoints, handlers::Database
 };
 use actix_web::{
-    self, web, App, HttpRequest, HttpServer, Responder, middleware::NormalizePath
+    self, web, App, HttpRequest, HttpServer, Responder
 };
 
 // The default endpoint
@@ -39,7 +39,7 @@ async fn main() -> std::io::Result<()> {
             .service(endpoints::tokens::delete_token_endpoint)
 
             // Trim path trailing slashes
-            .wrap(NormalizePath::trim())
+            .wrap(actix_web::middleware::NormalizePath::trim())
     })
     .bind(("127.0.0.1", 8080))?
     .run()

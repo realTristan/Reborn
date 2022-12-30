@@ -64,16 +64,12 @@ impl Database {
     pub async fn generate_token(&self, channel: i64, user: &str)-> Option<String> 
     {
         // Generate a new token hash
-        let mut token: String = global::generate_new_id(
-            &format!("{}:{}", user, global::get_time().as_nanos())
-        );
+        let mut token: String = global::generate_new_id(user);
 
         // Check if the token already exists inm the database. If it does, 
         // generate a new one until it doesn't already exist in the database
         while self.token_exists(&token).await {
-            token = global::generate_new_id(
-                &format!("{}:{}", user, global::get_time().as_nanos())
-            );
+            token = global::generate_new_id(user);
         }
 
         // Get the current time as milliseconds

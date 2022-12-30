@@ -5,7 +5,7 @@ use crate::{App, Page};
 // Render the register page widget
 pub fn render(page: &Page) -> Element<'static, App> {
     column![
-        row![text("Reborn Anti-Cheat").size(50)].padding(10),
+        row![text("Reborn Anti-Cheat").size(40)].padding(10),
 
         // Username input
         row![iced::widget::TextInput::new(

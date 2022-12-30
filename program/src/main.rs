@@ -31,6 +31,8 @@ pub enum App {
 
 // Page struct
 pub struct Page {
+    current_token: String,
+    logs: Vec<String>,
     current_page: u8,
     username: String,
     token: String,
@@ -65,6 +67,8 @@ impl Sandbox for Page {
     // Set the default values for the struct
     fn new() -> Self {
         Self {
+            current_token: String::new(),
+            logs: Vec::new(),
             current_page: 1,
             token: String::new(),
             username: String::new(),
@@ -90,9 +94,15 @@ impl Sandbox for Page {
                     Err(e) => self.error = e
                 }
             },
-            App::TokenInputChanged(_) => todo!(),
-            App::StartPressed => todo!(),
-            App::StopPressed => todo!(),
+            App::TokenInputChanged(token) => self.token = token,
+            App::StartPressed => {
+                self.current_token = self.token.clone();
+                self.logs = Vec::new();
+            },
+            App::StopPressed => {
+                self.current_token = String::new();
+                self.logs = Vec::new();
+            },
         }
     }
 

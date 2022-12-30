@@ -20,10 +20,22 @@ async fn register_user_endpoint(
             "response": "Invalid request body"
         }).to_string()
     };
-
-    // Get the request body variables
-    let username: String = body["username"].to_string();
-    let identifier: String = body["identifier"].to_string();
+    // Get the identifier from the request body
+    let identifier: String = match body.get("identifier") {
+        Some(id) =>  id.to_string(),
+        None => return serde_json::json!({
+            "status": 400,
+            "response": "Invalid identifier"
+        }).to_string()
+    };
+    // Get the username from the request body
+    let username: String = match body.get("username") {
+        Some(u) => u.to_string(),
+        None => return serde_json::json!({
+            "status": 400,
+            "response": "Invalid username"
+        }).to_string()
+    };
 
     // Get the provided authorization headers
     // Authorization: sha256("hwid")
@@ -78,9 +90,14 @@ async fn login_user_endpoint(
             "response": "Invalid request body"
         }).to_string()
     };
-
-    // Get the request variables
-    let identifier: String = body["identifier"].to_string();
+    // Get the identifier from the request body
+    let identifier: String = match body.get("identifier") {
+        Some(id) =>  id.to_string(),
+        None => return serde_json::json!({
+            "status": 400,
+            "response": "Invalid identifier"
+        }).to_string()
+    };
     
     // Get the provided authorization headers
     // Authorization: sha256("hwid")

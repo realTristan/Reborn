@@ -20,30 +20,26 @@ async fn send_message(channel: i64, body: serde_json::Value) -> Result<String, (
     // Create empty form data array
     let mut form: Vec<(&str, String)> = Vec::new();
 
-    // Get variables from the request body
-    let hardware_info: String = body["hardware_info"].to_string();
-    let image: String = body["image"].to_string();
-    let embed: String = body["embed"].to_string();
-
     // Get the embed from the request body
-    if embed.len() > 0 {
-        form.push(("embeds", embed.clone()));
-    }
-
-    // Image valid image
-    if image.len() > 0 {
-        form.push(("file", image));
+    match body.get("embed") {
+        Some(embed) => form.push(("embeds", embed.to_string())),
+        None => ()
     };
-
-    // If valid hardware info
-    if hardware_info.len() > 0 {
-        match base64::decode(hardware_info) {
+    // Get the image from the request body
+    match body.get("image") {
+        Some(image) => form.push(("file", image.to_string())),
+        None => ()
+    };
+    // Get the hardware info from the request body
+    match body.get("hardware_info") {
+        Some(info) => match base64::decode(info.to_string()) {
             Ok(data) => match std::str::from_utf8(&data) {
                 Ok(s) => form.push(("hardware_info", s.to_string())),
                 Err(_) => return Err(())
             },
             Err(_) => return Err(())
-        };
+        },
+        None => ()
     };
 
     // Send the http request

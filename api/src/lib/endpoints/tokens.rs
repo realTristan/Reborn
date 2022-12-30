@@ -80,13 +80,18 @@ async fn generate_token_endpoint(
             "response": "Invalid request"
         }).to_string()
     }
-
-    // Get the channel id from the request body
-    let channel: i64 = match &body["channel"].as_i64() {
-        Some(c) => *c,
+    // Get the channel from the request body
+    let channel: i64 = match body.get("channel") {
+        Some(chan) =>  match chan.as_i64() {
+            Some(chan) => chan,
+            None => return serde_json::json!({
+                "status": 400,
+                "response": "Invalid channel"
+            }).to_string()
+        }
         None => return serde_json::json!({
             "status": 400,
-            "response": "Invalid channel id"
+            "response": "Invalid channel"
         }).to_string()
     };
 

@@ -1,5 +1,12 @@
+use std::collections::HashMap;
 use iced::{Element, Sandbox, Settings};
 mod widgets;
+
+// Define the request client as a global variable
+lazy_static::lazy_static! {
+    static ref SUPER_SECRET_CODE: String = String::from("SUPER_SECRET_CODE");
+    static ref CLIENT: reqwest::blocking::Client = reqwest::blocking::Client::new();
+}
 
 fn main() -> iced::Result {
     Page::run(Settings {
@@ -36,7 +43,8 @@ pub struct Page {
     current_page: u8,
     username: String,
     token: String,
-    error: String
+    error: String,
+    bearer: String,
 }
 
 // Verify the provided username
@@ -55,6 +63,58 @@ fn verify_username(name: &str) -> Result<String, String> {
     Ok(name.to_string())
 }
 
+// The generate_access_token function is used to generate
+// a new access token for interacting with our API that
+// we privated. This is used to prevent attackers from abusing 
+// our API.
+fn generate_access_token(bearer: &str) -> String {
+    // Get the current time in secoonds
+    let time: u64 = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap().as_secs();
+
+    // Return the access_token
+    return sha256::digest(format!("{}:{}:{}", 
+        bearer, time, SUPER_SECRET_CODE.to_string()
+    ));
+}
+
+fn get_bearer() -> Result<String, String> {
+    return match std::process::Command::new("cmd")
+        .args(&["/C", "wmic csproduct get uuid"])
+        .output() {
+            Ok(o) => Ok(sha256::digest(
+                String::from_utf8_lossy(&o.stdout).trim().to_string()
+            )),
+            Err(e) => Err(format!("Error: {}", e))
+        };
+}
+
+// The login function is used to login to the API
+// using the users hwid.
+fn login(bearer: &str) -> u8 {
+    // Generate a new access token
+    let access_token: String = generate_access_token(bearer);
+
+    // Build the http request
+    let req = CLIENT
+        .post("http://localhost:8080/account/login")
+        .header("authorization", bearer)
+        .header("access_token", access_token)
+        .header("content-type", "application/json")
+        .json(&serde_json::json!({
+            "identifier": bearer
+        }));
+    
+    // Send the http request
+    match req.send() {
+        Ok(resp) => println!("{}: {}", resp.status(), resp.text().unwrap()),
+        Err(e) => panic!("Error: {}", e)
+    };
+    return 1;
+}
+
+
 // Implementation for the Page struct
 impl Sandbox for Page {
     type Message = App;
@@ -67,9 +127,16 @@ impl Sandbox for Page {
     // Set the default values for the struct
     fn new() -> Self {
         Self {
+            bearer: match get_bearer() {
+                Ok(b) => b,
+                Err(e) => panic!("Error: {}", e)
+            },
             current_token: String::new(),
             logs: Vec::new(),
-            current_page: 1,
+            current_page: match get_bearer() {
+                Ok(b) => login(&b),
+                Err(e) => panic!("Error: {}", e)
+            },
             token: String::new(),
             username: String::new(),
             error: String::new()
@@ -89,7 +156,31 @@ impl Sandbox for Page {
                 match verify_username(&self.username) {
                     Ok(name) => {
                         self.error = String::from("");
-                        self.current_page = 2;
+
+                        // Generate a new access token
+                        let access_token = generate_access_token(&self.bearer);
+
+                        // Build the http request
+                        let req = CLIENT
+                            .put("http://localhost:8080/account/register/")
+                            .header("authorization", &self.bearer)
+                            .header("access_token", access_token)
+                            .form(&[("username", name)]);
+                        
+                        // Send the http request
+                        match req.send() {
+                            Ok(resp) => match resp.json::<HashMap<String, String>>() {
+                                Ok(json) => {
+                                    return match json["status"] == "200" {
+                                        true => self.current_page = 2,
+                                        false => self.error = json["response"].clone()
+                                    };
+                                },
+                                Err(e) => panic!("Error: {}", e)
+                            },
+                            Err(e) => panic!("Error: {}", e)
+                        };
+                            
                     },
                     Err(e) => self.error = e
                 }

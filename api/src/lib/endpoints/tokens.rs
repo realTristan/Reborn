@@ -1,12 +1,12 @@
 use actix_web::{ HttpRequest, web, Responder};
 use crate::lib::{
-    handlers::Database, global, auth, structs::TokenBody
+    handlers::Database, global, auth
 };
 
 // The get_token() endpoint is used to get infrotmation about
 // the provided token. This includes the token channel_id, the
 // token creation_time and expiration_date, etc.
-#[actix_web::get("/token/{token}/")]
+#[actix_web::get("/token/{token}")]
 async fn get_token_endpoint(
     req: HttpRequest, db: web::Data<Database>
 ) -> impl Responder {
@@ -54,10 +54,19 @@ async fn get_token_endpoint(
 // The create_token endpoint is used to generate
 // a new vac token and insert it into the database along
 // with it's corresponding channel id and time of its creation.
-#[actix_web::put("/token/")]
+#[actix_web::put("/token")]
 async fn generate_token_endpoint(
-    req: HttpRequest, db: web::Data<Database>, body: web::Json<TokenBody>
+    req: HttpRequest, db: web::Data<Database>, body: web::Bytes
 ) -> impl Responder {
+
+    // Get the request body
+    let body: serde_json::Value = match global::get_body(&body) {
+        Ok(body) => body,
+        Err(_) => return serde_json::json!({
+            "status": 400,
+            "response": "Invalid request body"
+        }).to_string()
+    };
 
     // Get the provided authorization headers
     // Authorization: sha256("user_id")
@@ -72,8 +81,17 @@ async fn generate_token_endpoint(
         }).to_string()
     }
 
+    // Get the channel id from the request body
+    let channel: i64 = match &body["channel"].as_i64() {
+        Some(c) => *c,
+        None => return serde_json::json!({
+            "status": 400,
+            "response": "Invalid channel id"
+        }).to_string()
+    };
+
     // Generate a new token
-    return match db.generate_token(body.channel, &auth).await {
+    return match db.generate_token(channel, &auth).await {
         Some(t) => serde_json::json!({
             "status": 400,
             "token": t

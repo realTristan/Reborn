@@ -1,16 +1,29 @@
 use actix_web::{ HttpRequest, web, Responder};
 use crate::lib::{
-    handlers::Database, global, auth, structs::AccountBody
+    handlers::Database, global, auth
 };
 
 // The register account endpoint is used to register
 // an user and add them to the sqlite database. A registration
 // is required for the user to be able to provide a bearer token
 // which will be used for verification.
-#[actix_web::put("/account/register/")]
+#[actix_web::put("/account/register")]
 async fn register_user_endpoint(
-    req: HttpRequest, db: web::Data<Database>, body: web::Json<AccountBody>
+    req: HttpRequest, db: web::Data<Database>, body: web::Bytes
 ) -> impl Responder {
+
+    // Get the request body
+    let body: serde_json::Value = match global::get_body(&body) {
+        Ok(body) => body,
+        Err(_) => return serde_json::json!({
+            "status": 400,
+            "response": "Invalid request body"
+        }).to_string()
+    };
+
+    // Get the request body variables
+    let username: String = body["username"].to_string();
+    let identifier: String = body["identifier"].to_string();
 
     // Get the provided authorization headers
     // Authorization: sha256("hwid")
@@ -26,7 +39,7 @@ async fn register_user_endpoint(
     }
 
     // Check if the account already exists
-    if db.account_already_exists(&body.username, &body.identifier).await {
+    if db.account_already_exists(&username, &identifier).await {
         return serde_json::json!({
             "status": 400,
             "response": "Username already exists"
@@ -34,7 +47,7 @@ async fn register_user_endpoint(
     }
 
     // Register the account to the database
-    return match db.register_user_to_database(&body.username, &body.identifier).await {
+    return match db.register_user_to_database(&username, &identifier).await {
         true => serde_json::json!({
             "status": 200,
             "response": "Successfully registered user"
@@ -52,11 +65,23 @@ async fn register_user_endpoint(
 // If it does, then the user will automatically be logged 
 // into that account. This is used to prevent users from
 // making mulitple accounts when they don't need to.
-#[actix_web::post("/account/login/")]
+#[actix_web::post("/account/login")]
 async fn login_user_endpoint(
-    req: HttpRequest, db: web::Data<Database>, body: web::Json<AccountBody>
+    req: HttpRequest, db: web::Data<Database>, body: web::Bytes
 ) -> impl Responder {
 
+    // Get the request body
+    let body: serde_json::Value = match global::get_body(&body) {
+        Ok(body) => body,
+        Err(_) => return serde_json::json!({
+            "status": 400,
+            "response": "Invalid request body"
+        }).to_string()
+    };
+
+    // Get the request variables
+    let identifier: String = body["identifier"].to_string();
+    
     // Get the provided authorization headers
     // Authorization: sha256("hwid")
     let auth: String = global::get_header(&req, "authorization");
@@ -72,7 +97,7 @@ async fn login_user_endpoint(
 
     // Check if the account already exists for the provided
     // body.identifier (hwid)
-    return match db.account_hwid_exists(&body.identifier).await {
+    return match db.account_hwid_exists(&identifier).await {
         Some(username) => serde_json::json!({
             "status": 200,
             "response": username

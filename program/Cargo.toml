@@ -6,10 +6,10 @@ edition = "2021"
 [dependencies]
 chrono = "0.4.23"
 tokio = { version = "1.23.0", features = ["macros", "rt-multi-thread", "time"] }
+reqwest = { version = "0.11", features = ["blocking", "json"] }
 iced = "0.6.0"
 lazy_static = "1.4.0"
 sha256 = "1.0.3"
 serde_json = "1.0"
-reqwest = "0.11"
 base64 = "0.20.0"
 image-base64 = "0.1.0"

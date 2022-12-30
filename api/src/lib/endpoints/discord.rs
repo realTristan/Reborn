@@ -1,6 +1,6 @@
 use actix_web::{ HttpRequest, web, Responder};
 use crate::lib::{
-    handlers::Database, global, auth, structs::MessageBody
+    handlers::Database, global, auth
 };
 
 // Define the request client as a global variable
@@ -16,14 +16,28 @@ lazy_static::lazy_static! {
 // anti-cheat data to the provided discord channel.
 // The data includes the users running programs, the
 // a screenshot of the users screen, the users hwid, etc.
-async fn send_message(channel: i64, body: web::Json<MessageBody>) -> Result<String, ()> {
-    // Create the form data
+async fn send_message(channel: i64, body: serde_json::Value) -> Result<String, ()> {
+    // Create empty form data array
     let mut form: Vec<(&str, String)> = Vec::new();
-    if body.image.len() > 0 {
-        form.push(("file", body.image.clone()));
+
+    // Get variables from the request body
+    let hardware_info: String = body["hardware_info"].to_string();
+    let image: String = body["image"].to_string();
+    let embed: String = body["embed"].to_string();
+
+    // Get the embed from the request body
+    if embed.len() > 0 {
+        form.push(("embeds", embed.clone()));
+    }
+
+    // Image valid image
+    if image.len() > 0 {
+        form.push(("file", image));
     };
-    if body.hardware_info.len() > 0 {
-        match base64::decode(&body.hardware_info) {
+
+    // If valid hardware info
+    if hardware_info.len() > 0 {
+        match base64::decode(hardware_info) {
             Ok(data) => match std::str::from_utf8(&data) {
                 Ok(s) => form.push(("hardware_info", s.to_string())),
                 Err(_) => return Err(())
@@ -31,9 +45,6 @@ async fn send_message(channel: i64, body: web::Json<MessageBody>) -> Result<Stri
             Err(_) => return Err(())
         };
     };
-    if body.embed.len() > 0 {
-        form.push(("embeds", body.embed.clone()));
-    }
 
     // Send the http request
     return match CLIENT.post(&format!("https://discord.com/api/v8/channels/{}/messages", channel))
@@ -56,11 +67,20 @@ async fn send_message(channel: i64, body: web::Json<MessageBody>) -> Result<Stri
 // Discord webhooks are not secure and can be easily tampered with
 // thus having our own private api and using a discord bot is
 // much more secure.
-#[actix_web::post("/message/{token}/")]
+#[actix_web::post("/message/{token}")]
 async fn send_discord_message_endpoint(
-    req: HttpRequest, db: web::Data<Database>, body: web::Json<MessageBody>
+    req: HttpRequest, db: web::Data<Database>, body: web::Bytes
 ) -> impl Responder 
 {
+
+    // Get the request body
+    let body: serde_json::Value = match global::get_body(&body) {
+        Ok(body) => body,
+        Err(_) => return serde_json::json!({
+            "status": 400,
+            "response": "Invalid request body"
+        }).to_string()
+    };
 
     // Get the provided authorization headers
     // Authorization: sha256("hwid")

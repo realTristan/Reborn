@@ -50,7 +50,7 @@ fn generate_access_token(bearer: &str) -> String {
 // to send discord messages.
 async fn option_create_token(bearer: &str, access_token: &str, msg: &Message, ctx: &Context) {
     let resp = reqwest::Client::new()
-        .post("http://localhost:8080/api/v1/token")
+        .post("http://localhost:8080/token/")
         .header("Authorization", bearer)
         .header("access_token", access_token)
         .send().await;
@@ -73,7 +73,7 @@ async fn option_create_token(bearer: &str, access_token: &str, msg: &Message, ct
 // for the provided bearer.
 async fn option_delete_token(bearer: &str, access_token: &str, token: &str, msg: &Message, ctx: &Context) {
     let resp = reqwest::Client::new()
-        .delete(format!("http://localhost:8080/api/v1/token/{token}"))
+        .delete(format!("http://localhost:8080/token/{token}/"))
         .header("Authorization", bearer)
         .header("access_token", access_token)
         .send().await;
@@ -96,7 +96,7 @@ async fn option_delete_token(bearer: &str, access_token: &str, token: &str, msg:
 // for a token for the provided bearer.
 async fn option_show_token(bearer: &str, access_token: &str, token: &str, msg: &Message, ctx: &Context) {
     let resp = reqwest::Client::new()
-        .get(format!("http://localhost:8080/api/v1/token/{token}"))
+        .get(format!("http://localhost:8080/token/{token}/"))
         .header("Authorization", bearer)
         .header("access_token", access_token)
         .send().await;

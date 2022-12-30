@@ -3,7 +3,7 @@ use lib::{
     endpoints, handlers::Database
 };
 use actix_web::{
-    self, web, App, HttpRequest, HttpServer, Responder, HttpResponse
+    self, web, App, HttpRequest, HttpServer, Responder, middleware::NormalizePath
 };
 
 // The default endpoint
@@ -24,7 +24,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(db.clone()))
-            .wrap(actix_cors::Cors::permissive())
+            .service(main_endpoint)
             
             // Send message endpoints
             .service(endpoints::discord::send_discord_message_endpoint)
@@ -38,6 +38,8 @@ async fn main() -> std::io::Result<()> {
             .service(endpoints::tokens::generate_token_endpoint)
             .service(endpoints::tokens::delete_token_endpoint)
 
+            // Trim path trailing slashes
+            .wrap(NormalizePath::trim())
     })
     .bind(("127.0.0.1", 8080))?
     .run()

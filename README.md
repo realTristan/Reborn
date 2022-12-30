@@ -8,11 +8,10 @@ Versa Anti-Cheat Reborn using Rust instead of Python
 # Todo
 - Multithreading
 - Screenshots + Hardware Info
+- Lock Saved Folder and ZIP it once done
 - Send API Requests
-- Login / Register Screen
+- Login / Register API Requests
 - Find a way to make ui functions async
-
-- Discord Bot Commands
 
 
 # Program

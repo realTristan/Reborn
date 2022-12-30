@@ -7,7 +7,7 @@ Versa Anti-Cheat Reborn using Rust instead of Python
 ## Screens
 - Login Screen
 - Enter Token and See Logs Screen (Like Versa)
-- File Hash Checker Screen
+- File Hash Checker Screen -> maybe make a website for doing this
 
 # Discord Bot
 Only used for tokens.

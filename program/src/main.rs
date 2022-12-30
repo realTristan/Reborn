@@ -1,62 +1,107 @@
-// Define the request client as a global variable
-lazy_static::lazy_static! {
-    static ref DATA_FOLDER: String = sha256::digest(
-        global::get_time().as_nanos().to_string()
-    );
-}
+use iced::{Element, Sandbox, Settings};
+mod widgets;
 
-// The create_hardware_file() function is used to create a new
-// text file and write the users hardware information to it.
-// This includes the users running programs, the users hwid, etc.
-fn create_hardware_file(hardware_info: &str) -> std::io::Result<String> {
-    // Format the hardware file path
-    let hardware_info_path: &str = &format!("{}\\{}.txt", 
-        DATA_FOLDER.to_string(), chrono::offset::Utc::now()
-    );
-
-    // Create the file and if the file is successfully created,
-    // write the hardware data to the file then return it.
-    return match File::create(hardware_info_path) {
-        Ok(mut f) => match f.write_all(&hardware_info) {
-            Ok(_) => Ok(base64::encode(&hardware_info)),
-            Err(e) => Err(e)
+fn main() -> iced::Result {
+    Page::run(Settings {
+        window: iced::window::Settings {
+            size: (500, 400),
+            resizable: false,
+            decorations: true,
+            min_size: None,
+            max_size: None,
+            visible: true,
+            transparent: false,
+            always_on_top: false,
+            icon: None,
+            position: iced::window::Position::Centered,
         },
-        Err(e) => Err(e)
-    }
+        ..Default::default()
+    })
 }
 
-// The create_image_file() function is used to create a new
-// image which will be sent to the discord channel.
-fn create_image_file(image: &str) -> std::io::Result<String> {
-    // Format the image file path
-    let image_path: &str = &format!("{}\\{}.png", 
-        DATA_FOLDER.to_string(), chrono::offset::Utc::now()
-    );
-
-    // Base64 decode the image
-    let image_buffer: Vec<u8> = image_base64::from_base64(image.to_string());
-
-    // Create the file and if the file is successfully created,
-    // write the image buffer to the file then return it.
-    return match File::create(image_path) {
-        Ok(mut f) => match f.write_all(&image_buffer) {
-            Ok(_) => Ok(image_path.to_string()),
-            Err(e) => Err(e)
-        },
-        Err(e) => Err(e)
-    }
+// Handle User Input Changes
+#[derive(Debug, Clone)]
+pub enum App {
+    NameInputChanged(String),
+    TokenInputChanged(String),
+    RegisterPressed,
+    StartPressed,
+    StopPressed,
 }
 
-fn main() {
-    // Call the create_image_file() function
-    let image_path: String = match create_image_file(&body.image) {
-        Ok(path) => path,
-        Err(_) => return None
-    };
+// Page struct
+pub struct Page {
+    current_page: u8,
+    username: String,
+    token: String,
+    error: String
+}
 
-    // Call the create_hardware_file() function
-    let hardware_buf: Vec<u8> = match create_hardware_file(&body.hardware_info) {
-        Ok(buf) => buf,
-        Err(_) => return None
-    };
+// Verify the provided username
+fn verify_username(name: &str) -> Result<String, String> {
+    for c in name.chars() {
+        if !c.is_alphanumeric() {
+            return Err(String::from("Username can only contain alphanumeric characters"))
+        }
+    }
+    if name.len() < 3 {
+        return Err(String::from("Username must be at least 3 characters long"))
+    }
+    if name.len() > 16 {
+        return Err(String::from("Username cannot be longer than 16 characters"))
+    }
+    Ok(name.to_string())
+}
+
+// Implementation for the Page struct
+impl Sandbox for Page {
+    type Message = App;
+
+    // Set the theme to dark
+    fn theme(&self) -> iced::Theme {
+        iced::Theme::Dark
+    }
+
+    // Set the default values for the struct
+    fn new() -> Self {
+        Self {
+            current_page: 1,
+            token: String::new(),
+            username: String::new(),
+            error: String::new()
+        }
+    }
+
+    // Set the title of the window
+    fn title(&self) -> String {
+        String::from("Reborn Anti-Cheat")
+    }
+
+    // Handle the user input updates
+    fn update(&mut self, app: App) {
+        match app {
+            App::NameInputChanged(name) => self.username = name,
+            App::RegisterPressed => {
+                match verify_username(&self.username) {
+                    Ok(name) => {
+                        self.error = String::from("");
+                        self.current_page = 2;
+                    },
+                    Err(e) => self.error = e
+                }
+            },
+            App::TokenInputChanged(_) => todo!(),
+            App::StartPressed => todo!(),
+            App::StopPressed => todo!(),
+        }
+    }
+
+    // Render the window
+    fn view(&self) -> Element<App> {
+        if self.current_page == 1 {
+            widgets::register::render(self)
+        } else {
+            widgets::home::render(self)
+        }
+    }
 }

@@ -3,7 +3,7 @@ use lib::{
     endpoints, handlers::Database
 };
 use actix_web::{
-    self, web, App, HttpRequest, HttpServer, Responder
+    self, web, App, HttpRequest, HttpServer, Responder, HttpResponse
 };
 
 // The default endpoint
@@ -25,7 +25,6 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(web::Data::new(db.clone()))
             .wrap(actix_cors::Cors::permissive())
-            .service(main_endpoint)
             
             // Send message endpoints
             .service(endpoints::discord::send_discord_message_endpoint)

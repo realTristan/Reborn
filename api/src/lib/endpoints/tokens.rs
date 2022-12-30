@@ -24,7 +24,7 @@ async fn get_token_endpoint(
         }).to_string()
     }
 
-    // Get the channel id from the url parameters
+    // Get the token from the url parameters
     let token: &str = match req.match_info().get("token") {
         Some(t) => t,
         None => return serde_json::json!({
@@ -88,11 +88,9 @@ async fn generate_token_endpoint(
 
 // The delete_token endpoint is used to delete
 // the provided token from the database.
-#[actix_web::delete("/token/")]
-async fn delete_token_endpoint(
-    req: HttpRequest, db: web::Data<Database>, body: web::Json<TokenBody>
-) -> impl Responder {
-
+#[actix_web::delete("/token/{token}")]
+async fn delete_token_endpoint(req: HttpRequest, db: web::Data<Database>) -> impl Responder 
+{
     // Get the provided authorization headers
     // Authorization: sha256("user_id")
     let auth: String = global::get_header(&req, "authorization");
@@ -106,8 +104,17 @@ async fn delete_token_endpoint(
         }).to_string()
     }
 
+    // Get the token from the url parameters
+    let token: &str = match req.match_info().get("token") {
+        Some(t) => t,
+        None => return serde_json::json!({
+            "status": 400,
+            "response": "Invalid token"
+        }).to_string()
+    };
+
     // Delete the token from the database
-    return match db.delete_token(&body.token, &auth).await {
+    return match db.delete_token(token, &auth).await {
         true => serde_json::json!({
             "status": 200,
             "response": "Token deleted"

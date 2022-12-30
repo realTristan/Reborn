@@ -1,6 +1,6 @@
-use serenity::framework::StandardFramework;
-use serenity::prelude::*;
-use std::env;
+use serenity::{
+    framework::StandardFramework, prelude::*
+};
 mod commands;
 
 // Main function
@@ -13,7 +13,12 @@ async fn main() {
         .group(&commands::GENERAL_GROUP);
 
     // Get the token from the .env file
-    let token: String = env::var("DISCORD_TOKEN").expect("$TOKEN is not set");
+    let token: String = match std::env::var("DISCORD_TOKEN") {
+        Ok(token) => token,
+        Err(_) => {
+            panic!("Error: DISCORD_TOKEN not found in .env file")
+        }
+    };
     
     // Initialize the intents required for the discord bot
     let intents: GatewayIntents = GatewayIntents::non_privileged() 

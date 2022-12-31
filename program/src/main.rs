@@ -3,7 +3,7 @@ use iced::{Element, Sandbox, Settings};
 mod pages;
 mod lib;
 use lib::{
-    global, http, files, thread
+    global, http, files, thread, user::User
 };
 
 fn main() -> iced::Result {
@@ -39,67 +39,10 @@ pub struct Page {
     current_token: String,
     logs: Vec<String>,
     current_page: u8,
-    username: String,
     token: String,
     error: String,
-    bearer: String,
+    user: User,
 }
-
-// Verify the provided username
-fn verify_username(name: &str) -> Result<String, String> {
-    for c in name.chars() {
-        if !c.is_alphanumeric() {
-            return Err(String::from("Username can only contain alphanumeric characters"))
-        }
-    }
-    if name.len() < 3 {
-        return Err(String::from("Username must be at least 3 characters long"))
-    }
-    if name.len() > 16 {
-        return Err(String::from("Username cannot be longer than 16 characters"))
-    }
-    Ok(name.to_string())
-}
-
-// Register an account to the database
-fn register(name: &str, bearer: &str) -> bool {
-    // Generate a new access token
-    let access_token: String = global::generate_access_token(bearer);
-
-    // Build the http request
-    let resp = http::CLIENT
-        .put("http://localhost:8080/account/register/")
-        .header("authorization", bearer)
-        .header("access_token", access_token)
-        .json(&serde_json::json!({"username": name, "identifier": bearer}))
-        .send().expect("failed to send register request");
-    
-    // Check status
-    return resp.status().is_success();
-}
-
-// The login function is used to login to the API
-// using the users hwid.
-fn login(bearer: &str) -> u8 {
-    // Generate a new access token
-    let access_token: String = global::generate_access_token(bearer);
-
-    // Build the http request
-    let resp = http::CLIENT
-        .post("http://localhost:8080/account/login")
-        .header("authorization", bearer)
-        .header("access_token", access_token)
-        .header("content-type", "application/json")
-        .json(&serde_json::json!({"identifier": bearer}))
-        .send().expect("failed to send login request");
-    
-    // Check status
-    return match resp.status().is_success() {
-        true => 2,
-        false => 1
-    }
-}
-
 
 // Implementation for the Page struct
 impl Sandbox for Page {
@@ -107,76 +50,33 @@ impl Sandbox for Page {
 
     // Set the theme to dark
     fn theme(&self) -> iced::Theme {
-        iced::Theme::Dark
+        return iced::Theme::Dark
     }
 
     // Set the default values for the struct
     fn new() -> Self {
+        let _user = User::new();
         Self {
-            bearer: match global::get_bearer() {
-                Ok(b) => b,
-                Err(e) => panic!("Error: {}", e)
-            },
+            user: _user,
+            current_page: _user.login(),
             current_token: String::new(),
-            logs: Vec::new(),
-            current_page: match global::get_bearer() {
-                Ok(b) => login(&b),
-                Err(e) => panic!("Error: {}", e)
-            },
             token: String::new(),
-            username: String::new(),
-            error: String::new()
+            error: String::new(),
+            logs: Vec::new(),
         }
     }
 
     // Set the title of the window
     fn title(&self) -> String {
-        String::from("Reborn Anti-Cheat")
+        return String::from("Reborn Anti-Cheat")
     }
 
     // Handle the user input updates
     fn update(&mut self, app: App) {
         match app {
-            App::NameInputChanged(name) => self.username = name,
-            App::RegisterPressed => {
-                match verify_username(&self.username) {
-                    Err(e) => self.error = e,
-                    Ok(name) => {
-                        self.error = String::from("");
-
-                        // Register the user
-                        if register(&name, &self.bearer) {
-                            self.current_page = 2;
-
-                            // Spawn a new thread
-                            let handle = thread::spawn(move || {
-                                thread::main_loop();
-                            });
-
-                            // Join the thread
-                            handle.join();
-
-                        } 
-                        
-                        // If registration failed
-                        else {
-                            
-                            // Get the response json
-                            let json: HashMap<String, String> = match resp.json::<HashMap<String, String>>() {
-                                Ok(j) => j,
-                                Err(e) => self.error = e.to_string()
-                            };
-
-                            // Set the current error
-                            self.error = match json.get("response") {
-                                Some(e) => e.to_string(),
-                                None => String::from("Failed to parse error response")
-                            };
-                        }
-                    }
-                }
-            },
+            App::NameInputChanged(name) => self.user.name = name,
             App::TokenInputChanged(token) => self.token = token,
+            App::RegisterPressed => self.register_button_pressed(),
             App::StartPressed => {
                 self.current_token = self.token.clone();
                 self.logs = Vec::new();
@@ -190,10 +90,29 @@ impl Sandbox for Page {
 
     // Render the window
     fn view(&self) -> Element<App> {
+
+        // If the current page is 1, render the register page
         if self.current_page == 1 {
             pages::register::render(self)
-        } else {
+        } 
+
+        // Else, if the current page is 2, render the home page
+        else if self.current_page == 2 {
             pages::home::render(self)
+        }
+    }
+
+    // Register button callback function
+    fn register_button_pressed(&mut self) {
+        match user.is_valid_name() {
+            Err(e) => self.error = e,
+            Ok(name) => match user.register(&name, &self.bearer) {
+                Ok(_) => {
+                    self.current_page = 2;
+                    thread::spawn(move || { thread::main_loop(); }).join();
+                },
+                Err(e) => self.error = e
+            }
         }
     }
 }

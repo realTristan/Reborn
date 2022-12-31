@@ -79,6 +79,9 @@ fn generate_access_token(bearer: &str) -> String {
     ));
 }
 
+// The get_bearer function is used to get the users
+// hardware id. This is used to identify the user
+// for sending http requests to our privated api.
 fn get_bearer() -> Result<String, String> {
     return match std::process::Command::new("cmd")
         .args(&["/C", "wmic csproduct get uuid"])

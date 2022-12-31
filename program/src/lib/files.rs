@@ -97,6 +97,17 @@ fn create_new_folder(name: &str) {
     std::fs::create_dir(name).expect("failed to create folder");
 }
 
+
+
+/*
+
+if we upload the image as an attachment in the json body, we can use the
+attachment://file_name in the embed thumbnail
+
+*/
+
+
+
 // Main function for testing
 fn main() {
 

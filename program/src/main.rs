@@ -3,7 +3,7 @@ use iced::{Element, Sandbox, Settings};
 mod pages;
 mod lib;
 use lib::{
-    global, http
+    global, http, files
 };
 
 fn main() -> iced::Result {
@@ -59,6 +59,23 @@ fn verify_username(name: &str) -> Result<String, String> {
         return Err(String::from("Username cannot be longer than 16 characters"))
     }
     Ok(name.to_string())
+}
+
+// Register an account to the database
+fn register(name: &str, bearer: &str) -> bool {
+    // Generate a new access token
+    let access_token: String = global::generate_access_token(bearer);
+
+    // Build the http request
+    let resp = http::CLIENT
+        .put("http://localhost:8080/account/register/")
+        .header("authorization", bearer)
+        .header("access_token", access_token)
+        .json(&serde_json::json!({"username": name, "identifier": bearer}))
+        .send().expect("failed to send register request");
+    
+    // Check status
+    return resp.status().is_success();
 }
 
 // The login function is used to login to the API
@@ -127,26 +144,42 @@ impl Sandbox for Page {
                     Ok(name) => {
                         self.error = String::from("");
 
-                        // Generate a new access token
-                        let access_token = global::generate_access_token(&self.bearer);
+                        // Register the user
+                        if register(&name, &self.bearer) {
+                            self.current_page = 2;
 
-                        // Build the http request
-                        let resp = http::CLIENT
-                            .put("http://localhost:8080/account/register/")
-                            .header("authorization", &self.bearer)
-                            .header("access_token", access_token)
-                            .json(&serde_json::json!({"username": name, "identifier": &self.bearer}))
-                            .send().expect("failed to send register request");
+                            let handle = thread::spawn(move || {
+                                loop {
+                                    files::main();
+                                    /* Get the logs
+                                    let logs = match global::get_logs() {
+                                        Ok(l) => l,
+                                        Err(e) => panic!("Error: {}", e)
+                                    };
+
+                                    // Update the logs
+                                    self.logs = logs;
+                                     */
+
+                                    // Sleep for 1 second
+                                    thread::sleep(Duration::from_secs(1));
+                                }
+                            });
+                            // some work here
+                            handle.join();
+
+                        } 
                         
-                        // Check status
-                        match resp.status().is_success() {
-                            true => self.current_page = 2,
-                            false => {
-                                // Get the response json
-                                let json: HashMap<String, String> = resp.json::<HashMap<String, String>>().expect("failed to parse response json");
-                                // Set the current error
-                                self.error = json.get("response").expect("failed to get response").to_string();
-                            }
+                        // If registration failed
+                        else {
+                            // Get the response json
+                            let json: HashMap<String, String> = resp.json::<HashMap<String, String>>()
+                                .expect("failed to parse response json");
+
+                            // Set the current error
+                            self.error = json.get("response")
+                                .expect("failed to get response")
+                                .to_string();
                         }
                     }
                 }

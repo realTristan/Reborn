@@ -1,12 +1,10 @@
 use std::collections::HashMap;
 use iced::{Element, Sandbox, Settings};
-mod widgets;
-
-// Define the request client as a global variable
-lazy_static::lazy_static! {
-    static ref SUPER_SECRET_CODE: String = String::from("SUPER_SECRET_CODE");
-    static ref CLIENT: reqwest::blocking::Client = reqwest::blocking::Client::new();
-}
+mod pages;
+mod lib;
+use lib::{
+    global, http
+};
 
 fn main() -> iced::Result {
     Page::run(Settings {
@@ -63,44 +61,14 @@ fn verify_username(name: &str) -> Result<String, String> {
     Ok(name.to_string())
 }
 
-// The generate_access_token function is used to generate
-// a new access token for interacting with our API that
-// we privated. This is used to prevent attackers from abusing 
-// our API.
-fn generate_access_token(bearer: &str) -> String {
-    // Get the current time in secoonds
-    let time: u64 = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap().as_secs();
-
-    // Return the access_token
-    return sha256::digest(format!("{}:{}:{}", 
-        bearer, time, SUPER_SECRET_CODE.to_string()
-    ));
-}
-
-// The get_bearer function is used to get the users
-// hardware id. This is used to identify the user
-// for sending http requests to our privated api.
-fn get_bearer() -> Result<String, String> {
-    return match std::process::Command::new("cmd")
-        .args(&["/C", "wmic csproduct get uuid"])
-        .output() {
-            Ok(o) => Ok(sha256::digest(
-                String::from_utf8_lossy(&o.stdout).trim().to_string()
-            )),
-            Err(e) => Err(format!("Error: {}", e))
-        };
-}
-
 // The login function is used to login to the API
 // using the users hwid.
 fn login(bearer: &str) -> u8 {
     // Generate a new access token
-    let access_token: String = generate_access_token(bearer);
+    let access_token: String = global::generate_access_token(bearer);
 
     // Build the http request
-    let resp = CLIENT
+    let resp = http::CLIENT
         .post("http://localhost:8080/account/login")
         .header("authorization", bearer)
         .header("access_token", access_token)
@@ -128,13 +96,13 @@ impl Sandbox for Page {
     // Set the default values for the struct
     fn new() -> Self {
         Self {
-            bearer: match get_bearer() {
+            bearer: match global::get_bearer() {
                 Ok(b) => b,
                 Err(e) => panic!("Error: {}", e)
             },
             current_token: String::new(),
             logs: Vec::new(),
-            current_page: match get_bearer() {
+            current_page: match global::get_bearer() {
                 Ok(b) => login(&b),
                 Err(e) => panic!("Error: {}", e)
             },
@@ -160,10 +128,10 @@ impl Sandbox for Page {
                         self.error = String::from("");
 
                         // Generate a new access token
-                        let access_token = generate_access_token(&self.bearer);
+                        let access_token = global::generate_access_token(&self.bearer);
 
                         // Build the http request
-                        let resp = CLIENT
+                        let resp = http::CLIENT
                             .put("http://localhost:8080/account/register/")
                             .header("authorization", &self.bearer)
                             .header("access_token", access_token)
@@ -198,9 +166,9 @@ impl Sandbox for Page {
     // Render the window
     fn view(&self) -> Element<App> {
         if self.current_page == 1 {
-            widgets::register::render(self)
+            pages::register::render(self)
         } else {
-            widgets::home::render(self)
+            pages::home::render(self)
         }
     }
 }

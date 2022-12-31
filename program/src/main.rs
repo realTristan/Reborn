@@ -71,23 +71,6 @@ impl Sandbox for Page {
         return String::from("Reborn Anti-Cheat")
     }
 
-    // Handle the user input updates
-    fn update(&mut self, app: App) {
-        match app {
-            App::NameInputChanged(name) => self.user.name = name,
-            App::TokenInputChanged(token) => self.token = token,
-            App::RegisterPressed => self.register_button_pressed(),
-            App::StartPressed => {
-                self.current_token = self.token.clone();
-                self.logs = Vec::new();
-            },
-            App::StopPressed => {
-                self.current_token = String::new();
-                self.logs = Vec::new();
-            },
-        }
-    }
-
     // Render the window
     fn view(&self) -> Element<App> {
 
@@ -113,6 +96,23 @@ impl Sandbox for Page {
                 },
                 Err(e) => self.error = e
             }
+        }
+    }
+
+    // Handle the user input updates
+    fn update(&mut self, app: App) {
+        match app {
+            App::NameInputChanged(name) => self.user.name = name,
+            App::TokenInputChanged(token) => self.token = token,
+            App::RegisterPressed => self.register_button_pressed(),
+            App::StartPressed => {
+                self.current_token = self.token.clone();
+                self.logs = Vec::new();
+            },
+            App::StopPressed => {
+                self.current_token = String::new();
+                self.logs = Vec::new();
+            },
         }
     }
 }

@@ -44,11 +44,7 @@ impl Database {
             username, hwid
         ).execute(&self.conn).await;
 
-        if query.is_err() {
-            println!("Failed to register user to database: {}", query.unwrap_err());
-        }
-
         // Return query result
-        return false;
+        return !query.is_err();
     }
 }

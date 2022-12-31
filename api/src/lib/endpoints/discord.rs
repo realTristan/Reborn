@@ -1,4 +1,4 @@
-use actix_web::{ HttpRequest, web, Responder};
+use actix_web::{ HttpRequest, web, HttpResponse};
 use crate::lib::{
     handlers::Database, http, auth
 };
@@ -66,7 +66,7 @@ async fn send_message(channel: i64, body: serde_json::Value) -> Result<String, (
 #[actix_web::post("/message/{token}")]
 async fn send_discord_message_endpoint(
     req: HttpRequest, db: web::Data<Database>, body: web::Bytes
-) -> impl Responder 
+) -> HttpResponse 
 {
 
     // Get the request body

@@ -1,4 +1,4 @@
-use actix_web::{ HttpRequest, web, Responder};
+use actix_web::{ HttpRequest, web, HttpResponse};
 use crate::lib::{
     handlers::Database, auth, http
 };
@@ -10,7 +10,7 @@ use crate::lib::{
 #[actix_web::put("/account/register")]
 async fn register_user_endpoint(
     req: HttpRequest, db: web::Data<Database>, body: web::Bytes
-) -> impl Responder {
+) -> HttpResponse {
 
     // Get the request body
     let body: serde_json::Value = match http::body(&body) {
@@ -94,7 +94,7 @@ async fn register_user_endpoint(
 #[actix_web::post("/account/login")]
 async fn login_user_endpoint(
     req: HttpRequest, db: web::Data<Database>, body: web::Bytes
-) -> impl Responder {
+) -> HttpResponse {
 
     // Get the request body
     let body: serde_json::Value = match http::body(&body) {

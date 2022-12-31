@@ -1,4 +1,4 @@
-use actix_web::{ HttpRequest, web, Responder};
+use actix_web::{ HttpRequest, web, HttpResponse};
 use crate::lib::{
     handlers::Database, http, auth
 };
@@ -9,7 +9,7 @@ use crate::lib::{
 #[actix_web::get("/token/{token}")]
 async fn get_token_endpoint(
     req: HttpRequest, db: web::Data<Database>
-) -> impl Responder {
+) -> HttpResponse {
 
     // Get the provided authorization headers
     // Authorization: sha256("user_id")
@@ -66,15 +66,17 @@ async fn get_token_endpoint(
 #[actix_web::put("/token")]
 async fn generate_token_endpoint(
     req: HttpRequest, db: web::Data<Database>, body: web::Bytes
-) -> impl Responder {
+) -> HttpResponse {
 
     // Get the request body
     let body: serde_json::Value = match http::body(&body) {
         Ok(body) => body,
-        Err(_) => return serde_json::json!({
-            "status": "400",
-            "response": "Invalid request body"
-        }).to_string()
+        Err(_) => return http::response(
+            http::Status::BAD_REQUEST,
+            serde_json::json!({
+                "response": "Invalid request body"
+            })
+        )
     };
 
     // Get the provided authorization headers
@@ -84,36 +86,46 @@ async fn generate_token_endpoint(
 
     // Verify the provided authorization headers
     if !auth::verify(&auth, &access_token) {
-        return serde_json::json!({
-            "status": "400",
-            "response": "Invalid request"
-        }).to_string()
+        return http::response(
+            http::Status::BAD_REQUEST,
+            serde_json::json!({
+                "response": "Invalid request"
+            })
+        )
     }
     // Get the channel from the request body
     let channel: i64 = match body.get("channel") {
+        None => return http::response(
+            http::Status::BAD_REQUEST,
+            serde_json::json!({
+                "response": "Invalid channel id"
+            })
+        ),
         Some(chan) =>  match chan.as_i64() {
             Some(chan) => chan,
-            None => return serde_json::json!({
-                "status": "400",
-                "response": "Invalid channel"
-            }).to_string()
+            None => return http::response(
+                http::Status::BAD_REQUEST,
+                serde_json::json!({
+                    "response": "Invalid channel id"
+                })
+            )
         }
-        None => return serde_json::json!({
-            "status": "400",
-            "response": "Invalid channel"
-        }).to_string()
     };
 
     // Generate a new token
     return match db.generate_token(channel, &auth).await {
-        Some(t) => serde_json::json!({
-            "status": "400",
-            "token": t
-        }).to_string(),
-        None => return serde_json::json!({
-            "status": "400",
-            "response": "Failed to generate token"
-        }).to_string()
+        Some(t) => http::response(
+            http::Status::OK,
+            serde_json::json!({
+                "token": t
+            })
+        ),
+        None => return http::response(
+            http::Status::BAD_REQUEST,
+            serde_json::json!({
+                "response": "Failed to create token"
+            })
+        )
     };
 }
 
@@ -121,7 +133,7 @@ async fn generate_token_endpoint(
 // The delete_token endpoint is used to delete
 // the provided token from the database.
 #[actix_web::delete("/token/{token}")]
-async fn delete_token_endpoint(req: HttpRequest, db: web::Data<Database>) -> impl Responder 
+async fn delete_token_endpoint(req: HttpRequest, db: web::Data<Database>) -> HttpResponse 
 {
     // Get the provided authorization headers
     // Authorization: sha256("user_id")
@@ -130,30 +142,38 @@ async fn delete_token_endpoint(req: HttpRequest, db: web::Data<Database>) -> imp
 
     // Verify the provided authorization headers
     if !auth::verify(&auth, &access_token) {
-        return serde_json::json!({
-            "status": "400",
-            "response": "Invalid request"
-        }).to_string()
+        return http::response(
+            http::Status::BAD_REQUEST,
+            serde_json::json!({
+                "response": "Invalid request"
+            })
+        )
     }
 
     // Get the token from the url parameters
     let token: &str = match req.match_info().get("token") {
         Some(t) => t,
-        None => return serde_json::json!({
-            "status": "400",
-            "response": "Invalid token"
-        }).to_string()
+        None => return http::response(
+            http::Status::BAD_REQUEST,
+            serde_json::json!({
+                "response": "Invalid request"
+            })
+        )
     };
 
     // Delete the token from the database
     return match db.delete_token(token, &auth).await {
-        true => serde_json::json!({
-            "status": "200",
-            "response": "Token deleted"
-        }).to_string(),
-        false => serde_json::json!({
-            "status": "400",
-            "response": "Failed to delete token"
-        }).to_string()
+        true => http::response(
+            http::Status::OK,
+            serde_json::json!({
+                "response": "Token delete"
+            })
+        ),
+        false => http::response(
+            http::Status::BAD_REQUEST,
+            serde_json::json!({
+                "response": "Failed to delete token"
+            })
+        )
     }
 }

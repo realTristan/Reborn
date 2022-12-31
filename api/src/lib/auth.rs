@@ -1,13 +1,12 @@
 // Library Usages
+use super::global;
 use std::collections::HashMap;
 use std::sync::Mutex;
-
-use super::global;
 
 // The SUPER_SECRET_CODE is what's used to prevent
 // users trying to abuse the api from being able
 // to generate their own auth tokens
-static SUPER_SECRET_CODE: &str = "super_secret_code";
+static SUPER_SECRET_CODE: &str = "SUPER_SECRET_CODE";
 
 // The TOKEN_STORAGE is used to store previously used
 // tokens so that abusers can't access the api using
@@ -18,79 +17,72 @@ lazy_static::lazy_static! {
     };
 }
 
-//
-// The "authorization" header is a sha256("hwid") for the following functions:
-//      send_discord_message_endpoint()
-//      register_user_endpoint()
-//      login_user_endpoint()
-// 
-//
-// The "authorization" header is a sha256("user_id") for the following functions:
-//      get_token_endpoint()
-//      create_token_endpoint()
-//      delete_token_endpoint()
-//
-//
-// The "access_token" header is a sha256("{authorization_header}:{time_in_seconds}:{SUPER_SECRET_CODE}")
-//
+//////////////////////////////////////////////////////////////////////////////////////
+//                                                                                  // 
+//  HOW TOKENS WORK:                                                                //
+//                                                                                  //
+//      bearer = "SHA256 Encrypted Firebase Token"                                  //
+//                                                                                  //
+//      access_token = SHA256("{bearer}:{time_in_seconds}:{SUPER_SECRET_CODE}")     //
+//                                                                                  //
+//                                                                                  //
+//////////////////////////////////////////////////////////////////////////////////////
+
 
 // The verify() function is used to check whether the
 // provided auth token is valid. It does this by
 // checking whether the token has been created within
 // the past 8 seconds. If so, return true, else, return false.
-pub fn verify(auth_user: &str, access_token: &str) -> bool {
+pub fn verify(bearer: &str, access_token: &str) -> bool {
     // Lock the TOKEN STORAGE so we can access it's data
-    let _token_storage = TOKEN_STORAGE.lock();
-    // If an error has occurred, return false
-    if _token_storage.is_err() {
-        return false;
-    }
-
-    // Unwrap the token storage data
-    let mut token_storage = _token_storage.unwrap();
+    let mut token_storage = match TOKEN_STORAGE.lock() {
+        Ok(token_storage) => token_storage,
+        Err(e) => {println!("{:?}", e); return false},
+    };
     // Get the system time since epoch. This value
     // is used to check how long ago the auth token was
     // generated. Doing this prevents users from consecutively
     // using a single auth token if trying to abuse the api
     let time: u64 = global::get_time().as_secs();
+
     // Convert the token storage into a mutable variable.
     // This is required so that we can append the access_token
     // to the users token storage, or so that we can clear
     // the token storage if full.
-    let mut_storage: Option<&mut Vec<String>> = token_storage.get_mut(auth_user);
-
+    //
     // If the user doesn't already exist within the
     // token storage return true
-    if mut_storage.is_none() {
-        // Insert the user into the token storage
-        // along with the current time and auth token
-        token_storage.insert(
-            auth_user.to_string(),
-            [time.to_string(), access_token.to_string()].to_vec(),
-        );
-        // Return true as the token did not
-        // previously exist in the token storage
-        return true;
-    }
-    // Unwrap the mutable token storage
-    let mut_storage: &mut Vec<String> = mut_storage.unwrap();
+    let bearer_storage: &mut Vec<String> = match token_storage.get_mut(bearer) {
+        Some(bearer_storage) => bearer_storage,
+        None => {
+            // Insert the user into the token storage
+            // along with the current time and auth token
+            token_storage.insert(
+                bearer.to_string(),
+                [time.to_string(), access_token.to_string()].to_vec(),
+            );
+            // Return true as the token did not
+            // previously exist in the token storage
+            return true;
+        }
+    };
 
     // Execute the storage handler
     // If the function returns false, then the provided
     // auth token has already been used within the past 8 seconds.
-    if !storage_handler(mut_storage, access_token, &time) {
+    if !storage_handler(bearer_storage, access_token, &time) {
         return false;
     };
 
     // Check whether the auth token was generated
     // within the past 8 seconds
     for i in 0..8 {
-        let gen: String = format!("{}:{}:{}", auth_user, time - i, SUPER_SECRET_CODE);
+        let str_format: String = format!("{}:{}:{}", bearer, time - i, SUPER_SECRET_CODE);
         // If the provided auth token is equal to the
         // generated auth token, return true
-        if access_token == sha256::digest(gen) {
+        if access_token == sha256::digest(str_format) {
             // Append the access token to the TOKEN_STORAGE
-            mut_storage.push(access_token.to_string());
+            bearer_storage.push(access_token.to_string());
             return true;
         }
     }
@@ -102,20 +94,20 @@ pub fn verify(auth_user: &str, access_token: &str) -> bool {
 // within the past 8 seconds. This is function is
 // necessary to prevent abusers from using the same
 // token more than once.
-fn storage_handler(mut_storage: &mut Vec<String>, access_token: &str, time: &u64) -> bool {
+fn storage_handler(bearer_storage: &mut Vec<String>, access_token: &str, time: &u64) -> bool {
     // Get the last storage wipe time
-    let last_wipe_time: u64 = mut_storage[0].parse().unwrap();
+    let last_wipe_time: u64 = bearer_storage[0].parse().unwrap();
     // If the last wipe happened over 8 seconds ago,
     // wipe the users token storage to prevent an
     // overflow. If the user has too many tokens and
     // the cache isn't eventually cleared.. you already
     // know what'll happen lmao.
-    if time > &(last_wipe_time + 8) || mut_storage.len() > 10 {
+    if time > &(last_wipe_time + 8) || bearer_storage.len() > 10 {
         // Clear the users token storage and set
         // the first value of the array to the
         // current time as a string
-        mut_storage.clear();
-        mut_storage[0] = time.to_string();
+        bearer_storage.clear();
+        bearer_storage.push(time.to_string());
 
         // Return true to ignore using the below
         // return satatement
@@ -125,5 +117,5 @@ fn storage_handler(mut_storage: &mut Vec<String>, access_token: &str, time: &u64
     // cleared, check whether the access_token is already existant
     // in the token storage. If it is, return false, thus the
     // user is using an unauthorized token. Else, return true.
-    return !mut_storage.contains(&access_token.to_string());
+    return !bearer_storage.contains(&access_token.to_string());
 }

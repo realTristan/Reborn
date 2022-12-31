@@ -1,10 +1,9 @@
--- Sqlite Database Migration
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
     id                  INTEGER PRIMARY KEY NOT NULL,
     username            TEXT NOT NULL,
     hwid                TEXT NOT NULL
 );
-CREATE TABLE IF NOT EXISTS tokens (
+CREATE TABLE tokens (
     id                  INTEGER PRIMARY KEY NOT NULL,       -- id auto increment
     token               TEXT NOT NULL,                      -- sha256 encoded token
     channel             INTEGER NOT NULL,                   -- channel id

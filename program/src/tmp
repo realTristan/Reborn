@@ -1,13 +1,12 @@
-// Send the http request
-    match req.send() {
-        Ok(resp) => match resp.json::<HashMap<String, String>>() {
-            Ok(json) => {
-                return match json["status"] == "200" {
-                    true => 2, 
-                    false => 1
-                };
-            }, 
-            Err(e) => panic!("Error: {}", e) 
-        },
-        Err(e) => panic!("Error: {}", e)
-    };
+match req.send() {
+    Ok(resp) => match resp.json::<HashMap<String, String>>() {
+        Ok(json) => {
+            return match json["status"].to_string() == "200" {
+                true => 2, 
+                false => 1
+            };
+        }, 
+        Err(e) => panic!("Error: {}", e) 
+    },
+    Err(e) => panic!("Error: {}", e)
+};

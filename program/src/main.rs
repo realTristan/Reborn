@@ -97,20 +97,22 @@ fn login(bearer: &str) -> u8 {
     let access_token: String = generate_access_token(bearer);
 
     // Build the http request
-    let req = CLIENT
+    let resp = CLIENT
         .post("http://localhost:8080/account/login")
         .header("authorization", bearer)
         .header("access_token", access_token)
         .header("content-type", "application/json")
-        .json(&serde_json::json!({
-            "identifier": bearer
-        }));
+        .json(&serde_json::json!({"identifier": bearer}))
+        .send().expect("failed to send login request");
     
-    // Send the http request
-    match req.send() {
-        Ok(resp) => println!("{}: {}", resp.status(), resp.text().unwrap()),
-        Err(e) => panic!("Error: {}", e)
-    };
+    // Get the response json
+    let json: HashMap<String, String> = resp.json::<HashMap<String, String>>().expect("failed to parse response json");
+    // Get the response status
+    let status = json.get("status").expect("failed to get response status");
+    // Check status then return page number
+    if status == "200" {
+        return 2;
+    }
     return 1;
 }
 
@@ -154,6 +156,7 @@ impl Sandbox for Page {
             App::NameInputChanged(name) => self.username = name,
             App::RegisterPressed => {
                 match verify_username(&self.username) {
+                    Err(e) => self.error = e,
                     Ok(name) => {
                         self.error = String::from("");
 
@@ -161,28 +164,23 @@ impl Sandbox for Page {
                         let access_token = generate_access_token(&self.bearer);
 
                         // Build the http request
-                        let req = CLIENT
+                        let resp = CLIENT
                             .put("http://localhost:8080/account/register/")
                             .header("authorization", &self.bearer)
                             .header("access_token", access_token)
-                            .form(&[("username", name)]);
+                            .json(&serde_json::json!({"username": name, "identifier": &self.bearer}))
+                            .send().expect("failed to send register request");
                         
-                        // Send the http request
-                        match req.send() {
-                            Ok(resp) => match resp.json::<HashMap<String, String>>() {
-                                Ok(json) => {
-                                    return match json["status"] == "200" {
-                                        true => self.current_page = 2,
-                                        false => self.error = json["response"].clone()
-                                    };
-                                },
-                                Err(e) => panic!("Error: {}", e)
-                            },
-                            Err(e) => panic!("Error: {}", e)
-                        };
-                            
-                    },
-                    Err(e) => self.error = e
+                        // Get the response json
+                        let json: HashMap<String, String> = resp.json::<HashMap<String, String>>().expect("failed to parse response json");
+                        // Get the response status
+                        let status = json.get("status").expect("failed to get response status");
+                        // Check status
+                        match status == "200" {
+                            true => self.current_page = 2,
+                            false => self.error = json.get("response").expect("failed to get response").to_string()
+                        }
+                    }
                 }
             },
             App::TokenInputChanged(token) => self.token = token,

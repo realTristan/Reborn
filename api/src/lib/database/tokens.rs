@@ -52,10 +52,9 @@ impl Database {
             "SELECT token FROM tokens WHERE token = ?",
             token
         ).fetch_one(&self.conn).await;
-        return match query {
-            Ok(_) => true,
-            Err(_) => false
-        }
+
+        // Return query result
+        return !query.is_err();
     }
 
     // The generate_token() function is used to generate a new token
@@ -100,9 +99,8 @@ impl Database {
             "DELETE FROM tokens WHERE token = ? AND created_by = ?",
             token, user
         ).execute(&self.conn).await;
-        return match query {
-            Ok(_) => true,
-            Err(_) => false
-        };
+
+        // Return the query result
+        return !query.is_err();
     }
 }

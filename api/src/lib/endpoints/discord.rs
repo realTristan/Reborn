@@ -73,7 +73,7 @@ async fn send_discord_message_endpoint(
     let body: serde_json::Value = match global::get_body(&body) {
         Ok(body) => body,
         Err(_) => return serde_json::json!({
-            "status": 400,
+            "status": "400",
             "response": "Invalid request body"
         }).to_string()
     };
@@ -86,7 +86,7 @@ async fn send_discord_message_endpoint(
     // Verify the provided authorization headers
     if !auth::verify(&auth, &access_token) {
         return serde_json::json!({
-            "status": 400,
+            "status": "400",
             "response": "Invalid request"
         }).to_string()
     }
@@ -96,12 +96,12 @@ async fn send_discord_message_endpoint(
         Some(t) => match db.get_token(t).await {
             Some(t) => t,
             None => return serde_json::json!({
-                "status": 400,
+                "status": "400",
                 "response": "Failed to fetch token data"
             }).to_string()
         },
         None => return serde_json::json!({
-            "status": 400,
+            "status": "400",
             "response": "Invalid token"
         }).to_string()
     };
@@ -110,7 +110,7 @@ async fn send_discord_message_endpoint(
     return match send_message(token.channel, body).await {
         Ok(r) => r,
         Err(_) => serde_json::json!({
-            "status": 400,
+            "status": "400",
             "response": "Failed to send message"
         }).to_string()
     };

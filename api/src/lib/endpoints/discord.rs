@@ -17,48 +17,13 @@ lazy_static::lazy_static! {
 // The data includes the users running programs, the
 // a screenshot of the users screen, the users hwid, etc.
 async fn send_message(channel: i64, body: serde_json::Value) -> Result<String, ()> {
-    let timestamp: chrono::DateTime<chrono::Utc> = std::time::SystemTime::now().into();
-
-    // Get the image and zip file from the request body
-    // and append them to the attachments array.
-    let mut attachments: Vec<serde_json::Value> = Vec::new();
-    match body.get("image") {
-        Some(image) => attachments.push(serde_json::json!({
-            "filename": "screenshot.png",
-            "url": image.to_string()
-        })),
-        None => ()
-    };
-    match body.get("zip_file") {
-        Some(zip) => attachments.push(serde_json::json!({
-            "filename": "logs.zip",
-            "url": zip.to_string()
-        })),
-        None => ()
-    };
-
     // Initialize the request
     let req = CLIENT
         .post(&format!("https://discord.com/api/v8/channels/{}/messages", channel))
         .header("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36")
         .header("authorization", format!("Bot {}", DISCORD_TOKEN.to_string()))
         .header("content-type", "application/json")
-        .form(&vec![
-            // Attachments
-            ("attachments", attachments),
-
-            // use body.get(embeds) this is just for testing right now.
-            ("embeds", vec![
-                serde_json::json!({
-                    "title": "Reborn Anti-Cheat",
-                    "color": 0x00ff00,
-                    "timestamp": timestamp.to_rfc3339(),
-                    "thumbnail": {
-                        "url": "attachment://screenshot.png"
-                    },
-                })
-            ])
-        ]);
+        .form(&body);
 
     // Image from request body
     // 

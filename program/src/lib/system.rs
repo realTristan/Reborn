@@ -10,19 +10,19 @@ impl System {
     }
 
     // The system information and return it as a json object
-    pub fn info() -> serde_json::Value {
-        let map = serde_json::json!({
-            "hardware_info": Self::hardware_info(),
-            "processes": Self::processes(),
-            "users": Self::users(),
-            "disks": Self::disks(),
-            "networks": Self::networks(),
-            "components": Self::components()
+    pub fn info(&self) -> serde_json::Value {
+        let map: serde_json::Value = serde_json::json!({
+            "hardware_info": self.hardware_info(),
+            "processes": self.processes(),
+            "users": self.users(),
+            "disks": self.disks(),
+            "networks": self.networks(),
+            "components": self.components()
         });
     }
 
     // Get the hardware information
-    fn hardware_info() -> Vec<serde_json::Value> {
+    fn hardware_info(&self) -> Vec<serde_json::Value> {
         return serde_json::json!({
             "total_memory": sys.total_memory(),
             "used_memory": sys.used_memory(),
@@ -42,7 +42,7 @@ impl System {
     }
 
     // Get the processes
-    fn processes() -> Vec<serde_json::Value> {
+    fn processes(&self) -> Vec<serde_json::Value> {
         return vec![
             for (pid, process) in sys.processes() {
                 {
@@ -61,7 +61,7 @@ impl System {
     }
 
     // Get the users
-    fn users() -> Vec<serde_json::Value> {
+    fn users(&self) -> Vec<serde_json::Value> {
         return vec![
             for user in sys.users() {
                 {

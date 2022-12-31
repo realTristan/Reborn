@@ -19,16 +19,7 @@ impl Zip {
         }
     }
 
-    pub fn encodef(&self, buf: &[u8]) -> Result<String, Error> {
-        return match base64::encode(buf) {
-            Ok(f) => Some(format!(
-                "data:application/zip;base64,{f}",
-            )),
-            Err(e) => Err(e)
-        }
-    }
-
-    pub fn add_file(&self, path: &str, name: &str) -> Result<_, ZipError>{
+    pub fn add_file(&self, name: &str, buf: &Vec<u8>) -> Result<_, ZipError>{
         match self.data.start_file(name, zip::write::FileOptions::default()) {
             Ok(_) => _,
             Err(e) => return Err(e)

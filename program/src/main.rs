@@ -3,7 +3,7 @@ use iced::{Element, Sandbox, Settings};
 mod pages;
 mod lib;
 use lib::{
-    global, http, files
+    global, http, files, thread
 };
 
 fn main() -> iced::Result {
@@ -148,38 +148,30 @@ impl Sandbox for Page {
                         if register(&name, &self.bearer) {
                             self.current_page = 2;
 
+                            // Spawn a new thread
                             let handle = thread::spawn(move || {
-                                loop {
-                                    files::main();
-                                    /* Get the logs
-                                    let logs = match global::get_logs() {
-                                        Ok(l) => l,
-                                        Err(e) => panic!("Error: {}", e)
-                                    };
-
-                                    // Update the logs
-                                    self.logs = logs;
-                                     */
-
-                                    // Sleep for 1 second
-                                    thread::sleep(Duration::from_secs(1));
-                                }
+                                thread::main_loop();
                             });
-                            // some work here
+
+                            // Join the thread
                             handle.join();
 
                         } 
                         
                         // If registration failed
                         else {
+                            
                             // Get the response json
-                            let json: HashMap<String, String> = resp.json::<HashMap<String, String>>()
-                                .expect("failed to parse response json");
+                            let json: HashMap<String, String> = match resp.json::<HashMap<String, String>>() {
+                                Ok(j) => j,
+                                Err(e) => self.error = e.to_string()
+                            };
 
                             // Set the current error
-                            self.error = json.get("response")
-                                .expect("failed to get response")
-                                .to_string();
+                            self.error = match json.get("response") {
+                                Some(e) => e.to_string(),
+                                None => String::from("Failed to parse error response")
+                            };
                         }
                     }
                 }

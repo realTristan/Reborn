@@ -19,46 +19,52 @@ lazy_static::lazy_static! {
 async fn send_message(channel: i64, body: serde_json::Value) -> Result<String, ()> {
     let timestamp: chrono::DateTime<chrono::Utc> = std::time::SystemTime::now().into();
 
+    // Get the image and zip file from the request body
+    // and append them to the attachments array.
+    let mut attachments: Vec<serde_json::Value> = Vec::new();
+    match body.get("image") {
+        Some(image) => attachments.push(serde_json::json!({
+            "filename": "screenshot.png",
+            "url": image.to_string()
+        })),
+        None => ()
+    };
+    match body.get("zip_file") {
+        Some(zip) => attachments.push(serde_json::json!({
+            "filename": "logs.zip",
+            "url": zip.to_string()
+        })),
+        None => ()
+    };
+
+    // Initialize the request
     let req = CLIENT
         .post(&format!("https://discord.com/api/v8/channels/{}/messages", channel))
         .header("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36")
         .header("authorization", format!("Bot {}", DISCORD_TOKEN.to_string()))
         .header("content-type", "application/json")
         .form(&vec![
-            ("attachments", serde_json::json!({
-                "filename": "screenshot.png",
-                "url": body.get("image").unwrap().to_string()
-            })),
+            // Attachments
+            ("attachments", attachments),
 
             // use body.get(embeds) this is just for testing right now.
-            ("embeds", serde_json::json!({
-                "title": "Reborn Anti-Cheat",
-                "color": 0x00ff00,
-                "timestamp": timestamp.to_rfc3339(),
-                "thumbnail": {
-                    "url": "attachment://screenshot.png"
-                },
-            }))
+            ("embeds", vec![
+                serde_json::json!({
+                    "title": "Reborn Anti-Cheat",
+                    "color": 0x00ff00,
+                    "timestamp": timestamp.to_rfc3339(),
+                    "thumbnail": {
+                        "url": "attachment://screenshot.png"
+                    },
+                })
+            ])
         ]);
 
-        
     // Image from request body
     // 
     // data:image/png;base64,{base64 encoded image bytes}
     // ex: data:image/png;base64,iVBORw0KGgoAAAANS...
     //
-
-
-    /*
-    
-    // Get the embed from the request body
-    match body.get("embed") {
-        Some(embed) => req.body(json!({ "embeds": embed })),
-        None => ()
-    };
-
-    */
-
 
     // Get the zip file from the request body
     // and decode it from base64 then set it as the
@@ -90,8 +96,7 @@ async fn send_message(channel: i64, body: serde_json::Value) -> Result<String, (
 #[actix_web::post("/message/{token}")]
 async fn send_discord_message_endpoint(
     req: HttpRequest, db: web::Data<Database>, body: web::Bytes
-) -> HttpResponse 
-{
+) -> HttpResponse {
 
     // Get the request body
     let body: serde_json::Value = match http::body(&body) {

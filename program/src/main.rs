@@ -108,15 +108,11 @@ fn login(bearer: &str) -> u8 {
         .json(&serde_json::json!({"identifier": bearer}))
         .send().expect("failed to send login request");
     
-    // Get the response json
-    let json: HashMap<String, String> = resp.json::<HashMap<String, String>>().expect("failed to parse response json");
-    // Get the response status
-    let status = json.get("status").expect("failed to get response status");
-    // Check status then return page number
-    if status == "200" {
-        return 2;
+    // Check status
+    return match resp.status().is_success() {
+        true => 2,
+        false => 1
     }
-    return 1;
 }
 
 
@@ -174,14 +170,15 @@ impl Sandbox for Page {
                             .json(&serde_json::json!({"username": name, "identifier": &self.bearer}))
                             .send().expect("failed to send register request");
                         
-                        // Get the response json
-                        let json: HashMap<String, String> = resp.json::<HashMap<String, String>>().expect("failed to parse response json");
-                        // Get the response status
-                        let status = json.get("status").expect("failed to get response status");
                         // Check status
-                        match status == "200" {
+                        match resp.status().is_success() {
                             true => self.current_page = 2,
-                            false => self.error = json.get("response").expect("failed to get response").to_string()
+                            false => {
+                                // Get the response json
+                                let json: HashMap<String, String> = resp.json::<HashMap<String, String>>().expect("failed to parse response json");
+                                // Set the current error
+                                self.error = json.get("response").expect("failed to get response").to_string();
+                            }
                         }
                     }
                 }

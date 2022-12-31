@@ -1,6 +1,6 @@
 use actix_web::{ HttpRequest, web, Responder};
 use crate::lib::{
-    handlers::Database, global, auth
+    handlers::Database, auth, http
 };
 
 // The register account endpoint is used to register
@@ -13,61 +13,75 @@ async fn register_user_endpoint(
 ) -> impl Responder {
 
     // Get the request body
-    let body: serde_json::Value = match global::get_body(&body) {
+    let body: serde_json::Value = match http::body(&body) {
         Ok(body) => body,
-        Err(_) => return serde_json::json!({
-            "status": "400",
-            "response": "Invalid request body"
-        }).to_string()
+        Err(_) => return http::response(
+            http::Status::BAD_REQUEST,
+            serde_json::json!({
+                "response": "Invalid request body"
+            })
+        )
     };
     // Get the identifier from the request body
     let identifier: String = match body.get("identifier") {
         Some(id) =>  id.to_string(),
-        None => return serde_json::json!({
-            "status": "400",
-            "response": "Invalid identifier"
-        }).to_string()
+        None => return http::response(
+            http::Status::BAD_REQUEST,
+            serde_json::json!({
+                "response": "Invalid request body"
+            })
+        )
     };
     // Get the username from the request body
     let username: String = match body.get("username") {
         Some(u) => u.to_string(),
-        None => return serde_json::json!({
-            "status": "400",
-            "response": "Invalid username"
-        }).to_string()
+        None => return http::response(
+            http::Status::BAD_REQUEST,
+            serde_json::json!({
+                "response": "Invalid request body"
+            })
+        )
     };
 
     // Get the provided authorization headers
     // Authorization: sha256("hwid")
-    let auth: String = global::get_header(&req, "authorization");
-    let access_token: String = global::get_header(&req, "access_token");
+    let auth: String = http::header(&req, "authorization");
+    let access_token: String = http::header(&req, "access_token");
 
     // Verify the provided authorization headers
     if !auth::verify(&auth, &access_token) {
-        return serde_json::json!({
-            "status": "400",
-            "response": "Invalid request"
-        }).to_string()
+        return http::response(
+            http::Status::BAD_REQUEST,
+            serde_json::json!({
+                "response": "Invalid request"
+            })
+        )
     }
 
     // Check if the account already exists
     if db.account_already_exists(&username, &identifier).await {
-        return serde_json::json!({
-            "status": "400",
-            "response": "Username already exists"
-        }).to_string()
+        return http::response(
+            http::Status::BAD_REQUEST,
+            serde_json::json!({
+                "response": "Username already exists"
+            })
+        )
     }
 
     // Register the account to the database
     return match db.register_user_to_database(&username, &identifier).await {
-        true => serde_json::json!({
-            "status": "200",
-            "response": "Successfully registered user"
-        }).to_string(),
-        false => serde_json::json!({
-            "status": "400",
-            "response": "Failed to register user"
-        }).to_string()
+        true => http::response(
+            http::Status::OK,
+            serde_json::json!({
+                "response": "Registered user"
+            })
+        ),
+        false => http::response(
+            http::Status::BAD_REQUEST,
+            serde_json::json!({
+                "response": "Failed to register user"
+            })
+        )
     }
 }
 
@@ -83,45 +97,56 @@ async fn login_user_endpoint(
 ) -> impl Responder {
 
     // Get the request body
-    let body: serde_json::Value = match global::get_body(&body) {
+    let body: serde_json::Value = match http::body(&body) {
         Ok(body) => body,
-        Err(_) => return serde_json::json!({
-            "status": "400",
-            "response": "Invalid request body"
-        }).to_string()
+        Err(_) => return http::response(
+            http::Status::BAD_REQUEST,
+            serde_json::json!({
+                "response": "Invalid request body"
+            })
+        )
     };
     // Get the identifier from the request body
     let identifier: String = match body.get("identifier") {
         Some(id) =>  id.to_string(),
-        None => return serde_json::json!({
-            "status": "400",
-            "response": "Invalid identifier"
-        }).to_string()
+        None => return http::response(
+            http::Status::BAD_REQUEST,
+            serde_json::json!({
+                "response": "Invalid request body"
+            })
+        )
     };
     
     // Get the provided authorization headers
     // Authorization: sha256("hwid")
-    let auth: String = global::get_header(&req, "authorization");
-    let access_token: String = global::get_header(&req, "access_token");
+    let auth: String = http::header(&req, "authorization");
+    let access_token: String = http::header(&req, "access_token");
 
     // Verify the provided authorization headers
     if !auth::verify(&auth, &access_token) {
-        return serde_json::json!({
-            "status": "400",
-            "response": "Invalid request"
-        }).to_string()
+        return http::response(
+            http::Status::BAD_REQUEST,
+            serde_json::json!({
+                "response": "Invalid request"
+            })
+        )
     }
 
     // Check if the account already exists for the provided
     // body.identifier (hwid)
     return match db.account_hwid_exists(&identifier).await {
-        Some(username) => serde_json::json!({
-            "status": "200",
-            "response": username
-        }).to_string(),
-        None => serde_json::json!({
-            "status": "400",
-            "response": "Invalid user"
-        }).to_string()
+        Some(username) => http::response(
+            http::Status::OK,
+            serde_json::json!({
+                "response": "User exists",
+                "username": username
+            })
+        ),
+        None => http::response(
+            http::Status::BAD_REQUEST,
+            serde_json::json!({
+                "response": "Invalid user"
+            })
+        )
     };
 }

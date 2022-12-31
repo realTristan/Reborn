@@ -1,6 +1,6 @@
 use actix_web::{ HttpRequest, web, Responder};
 use crate::lib::{
-    handlers::Database, global, auth
+    handlers::Database, http, auth
 };
 
 // The get_token() endpoint is used to get infrotmation about
@@ -13,40 +13,49 @@ async fn get_token_endpoint(
 
     // Get the provided authorization headers
     // Authorization: sha256("user_id")
-    let auth: String = global::get_header(&req, "authorization");
-    let access_token: String = global::get_header(&req, "access_token");
+    let auth: String = http::header(&req, "authorization");
+    let access_token: String = http::header(&req, "access_token");
 
     // Verify the provided authorization headers
     if !auth::verify(&auth, &access_token) {
-        return serde_json::json!({
-            "status": "400",
-            "response": "Invalid request"
-        }).to_string()
+        return http::response(
+            http::Status::BAD_REQUEST,
+            serde_json::json!({
+                "response": "Invalid request"
+            })
+        )
     }
 
     // Get the token from the url parameters
     let token: &str = match req.match_info().get("token") {
         Some(t) => t,
-        None => return serde_json::json!({
-            "status": "400",
-            "response": "Invalid token"
-        }).to_string()
+        None => return http::response(
+            http::Status::BAD_REQUEST,
+            serde_json::json!({
+                "response": "Invalid request"
+            })
+        )
     };
 
     // Get the token information from the database
     return match db.get_token(token).await {
-        Some(data) => serde_json::json!({
-            "status": "200",
-            "token": token,
-            "channel": data.channel,
-            "created_by": data.created_by,
-            "created_at": data.created_at,
-            "expires_in": data.expires_in.to_string()
-        }).to_string(),
-        None => serde_json::json!({
-            "status": "400",
-            "response": "Token invalid or expired"
-        }).to_string()
+        Some(data) => http::response(
+            http::Status::OK,
+            serde_json::json!({
+                "status": "200",
+                "token": token,
+                "channel": data.channel,
+                "created_by": data.created_by,
+                "created_at": data.created_at,
+                "expires_in": data.expires_in.to_string()
+            })
+        ),
+        None => http::response(
+            http::Status::BAD_REQUEST,
+            serde_json::json!({
+                "response": "Token invalid or expired"
+            })
+        )
     };
 }
 
@@ -60,7 +69,7 @@ async fn generate_token_endpoint(
 ) -> impl Responder {
 
     // Get the request body
-    let body: serde_json::Value = match global::get_body(&body) {
+    let body: serde_json::Value = match http::body(&body) {
         Ok(body) => body,
         Err(_) => return serde_json::json!({
             "status": "400",
@@ -70,8 +79,8 @@ async fn generate_token_endpoint(
 
     // Get the provided authorization headers
     // Authorization: sha256("user_id")
-    let auth: String = global::get_header(&req, "authorization");
-    let access_token: String = global::get_header(&req, "access_token");
+    let auth: String = http::header(&req, "authorization");
+    let access_token: String = http::header(&req, "access_token");
 
     // Verify the provided authorization headers
     if !auth::verify(&auth, &access_token) {
@@ -116,8 +125,8 @@ async fn delete_token_endpoint(req: HttpRequest, db: web::Data<Database>) -> imp
 {
     // Get the provided authorization headers
     // Authorization: sha256("user_id")
-    let auth: String = global::get_header(&req, "authorization");
-    let access_token: String = global::get_header(&req, "access_token");
+    let auth: String = http::header(&req, "authorization");
+    let access_token: String = http::header(&req, "access_token");
 
     // Verify the provided authorization headers
     if !auth::verify(&auth, &access_token) {

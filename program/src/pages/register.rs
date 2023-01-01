@@ -3,7 +3,7 @@ use iced::{Alignment, Element};
 use crate::{App, Page};
 
 // Render the register page widget
-pub fn render(page: &Page) -> Element<'static, App> {
+pub fn render(page: &Page) -> Element<App> {
     column![
         row![text("Reborn Anti-Cheat").size(40)].padding(10),
 

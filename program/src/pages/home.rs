@@ -1,9 +1,11 @@
 use iced::widget::{row, button, column, text};
 use iced::{Alignment, Element};
-use crate::{App, Page};
+use crate::{
+    lib::global, App, Page
+};
 
 // Render the home page widget
-pub fn render(page: &Page) -> Element<'static, App> {
+pub fn render(page: &Page) -> Element<App> {
     // Create the main column
     let mut main = column![
         column![
@@ -38,10 +40,10 @@ pub fn render(page: &Page) -> Element<'static, App> {
 
     // Push 8 test widgets
     // TODO: Replace this with the actual logs (page.logs)
-    for _ in 1..10 {
+    for log in &page.logs {
         main = main.push(
             row![
-                text(format!("{}: Data submitted", chrono::offset::Utc::now().format("%Y-%m-%d %H:%M"))),
+                text(format!("{}: {}", global::get_date_time(), log))
             ].padding(5)
         );
     }

@@ -31,7 +31,7 @@ async fn send_message(channel: i64, body: serde_json::Value) -> Result<String, S
             Ok(t) => Ok(t),
             Err(_) => Err(String::from("Failed to parse response body"))
         },
-        Err(_) => Err(String::form("Failed to send http request"))
+        Err(_) => Err(String::from("Failed to send http request"))
     };
 }
 

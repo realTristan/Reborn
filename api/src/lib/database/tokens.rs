@@ -3,10 +3,10 @@ use crate::lib::{
 };
 
 impl Database {
-    // The get_token() function is used to get the channel id,
+    // The get_token_info() function is used to get the channel id,
     // creator_id, and creation time of a token from the database 
     // using the provided token.
-    pub async fn get_token(&self, token: &str) -> Option<Token> 
+    pub async fn get_token_info(&self, token: &str) -> Option<Token> 
     {
         // Query the database for the token
         let query = sqlx::query!(

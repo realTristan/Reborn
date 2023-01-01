@@ -38,7 +38,7 @@ async fn get_token_endpoint(
     };
 
     // Get the token information from the database
-    return match db.get_token(token).await {
+    return match db.get_token_info(token).await {
         Some(data) => http::response(
             http::Status::OK,
             serde_json::json!({

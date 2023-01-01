@@ -74,7 +74,7 @@ async fn send_discord_message_endpoint(
     
     // Get the token from the url parameters
     let token = match req.match_info().get("token") {
-        Some(t) => match db.get_token(t).await {
+        Some(t) => match db.get_token_info(t).await {
             Some(t) => t,
             None => return http::response(
                 http::Status::BAD_REQUEST,

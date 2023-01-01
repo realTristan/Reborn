@@ -6,8 +6,8 @@ Versa Anti-Cheat Reborn using Rust instead of Python
 ![Capture2](https://user-images.githubusercontent.com/75189508/210025481-cddd53e1-99ae-4f29-a723-ac355593c81d.PNG)
 
 # Todo
-- Fix User Struct
-- Fix main.rs
+- Find way to kill thread when press stop
+- Cleanup
 - Fix all the horrible security bugs 😭
 
 

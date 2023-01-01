@@ -1,7 +1,7 @@
-use super::{global, http};
+use super::{http, auth};
 
 #[derive(Debug, Clone)]
-pub struct User {
+pub(crate) struct User {
     pub name: String,
     pub bearer: String,
 }
@@ -50,7 +50,7 @@ impl User {
     // using the users hwid.
     pub fn login(&self) -> u8 {
         // Generate a new access token
-        let access_token: String = global::generate_access_token(&self.bearer);
+        let access_token: String = auth::generate_access_token(&self.bearer);
 
         // Build the http request
         let resp = http::CLIENT
@@ -68,7 +68,7 @@ impl User {
     // Register an account to the database
     pub fn register(&self) -> Result<(), String> {
         // Generate a new access token
-        let access_token: String = global::generate_access_token(&self.bearer);
+        let access_token: String = auth::generate_access_token(&self.bearer);
 
         // Build the http request
         let resp = http::CLIENT

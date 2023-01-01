@@ -1,9 +1,9 @@
-use super::{global, http};
+use super::{global, http, auth};
 
 // Send an embed to the discord channel notifying
 // the staff that this user has started the anti-cheat
 pub fn send_start_message(bearer: &str, token: &str) -> bool {
-    let access_token: String = global::generate_access_token(bearer);
+    let access_token: String = auth::generate_access_token(bearer);
 
     // Build the http request
     let resp = http::CLIENT
@@ -32,7 +32,7 @@ pub fn send_start_message(bearer: &str, token: &str) -> bool {
 // Send an embed to the discord channel notifying
 // the staff that this user has stopped the anti-cheat
 pub fn send_stop_message(bearer: &str, token: &str) -> bool {
-    let access_token: String = global::generate_access_token(bearer);
+    let access_token: String = auth::generate_access_token(bearer);
 
     // Build the http request
     let resp = http::CLIENT
@@ -62,10 +62,10 @@ pub fn send_stop_message(bearer: &str, token: &str) -> bool {
 // to our api which will send the provided files to
 // the channel id provided in by token.
 pub fn send_files(
-    bearer: &str, token: &str, image_data: &str, sysinfo_data: &str
+    bearer: &str, token: &str, image: &str, sysinfo: &str
 ) -> bool {
     // Generate a new access token
-    let access_token: String = global::generate_access_token(bearer);
+    let access_token: String = auth::generate_access_token(bearer);
 
     // Build the http request
     let resp = http::CLIENT
@@ -77,11 +77,11 @@ pub fn send_files(
             "attachments": vec![
                 serde_json::json!({
                     "name": "screenshot.png",
-                    "url": image_data
+                    "url": image
                 }),
                 serde_json::json!({
                     "name": "sysinfo.txt",
-                    "url": sysinfo_data
+                    "url": sysinfo
                 })
             ],
 

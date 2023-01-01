@@ -1,6 +1,6 @@
 use sysinfo::{ProcessExt, SystemExt};
 
-pub struct System {
+pub(crate) struct System {
     sys: sysinfo::System
 }
 impl System {

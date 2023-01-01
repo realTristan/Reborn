@@ -5,3 +5,4 @@ pub mod zip;
 pub mod system;
 pub mod user;
 pub mod discord;
+pub mod auth;

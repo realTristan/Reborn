@@ -1,6 +1,6 @@
 use super::global;
 
-pub struct Zip {
+pub(crate) struct Zip {
     data: zip::ZipWriter<std::fs::File>
 }
 impl Zip {

@@ -16,7 +16,7 @@ lazy_static::lazy_static! {
 // anti-cheat data to the provided discord channel.
 // The data includes the users running programs, the
 // a screenshot of the users screen, the users hwid, etc.
-async fn send_message(channel: i64, body: serde_json::Value) -> Result<String, ()> {
+async fn send_message(channel: i64, body: serde_json::Value) -> Result<String, String> {
     // Initialize the request
     let req = CLIENT
         .post(&format!("https://discord.com/api/v8/channels/{}/messages", channel))
@@ -29,9 +29,9 @@ async fn send_message(channel: i64, body: serde_json::Value) -> Result<String, (
     return match req.send().await {
         Ok(r) => match r.text().await {
             Ok(t) => Ok(t),
-            Err(_) => Err(())
+            Err(_) => Err(String::from("Failed to parse response body"))
         },
-        Err(_) => Err(())
+        Err(_) => Err(String::form("Failed to send http request"))
     };
 }
 

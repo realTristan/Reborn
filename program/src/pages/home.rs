@@ -8,7 +8,7 @@ pub fn render(page: &Page) -> Element<'static, App> {
     let mut main = column![
         column![
             text("Reborn Anti-Cheat").size(40),
-            text(format!("Welcome, {0}", page.username)).size(20),
+            text(format!("Welcome, {0}", page.user.name)).size(20),
         ].padding([30, 0, 10, 0]).spacing(10).align_items(Alignment::Center),
 
         // Text input

@@ -6,12 +6,8 @@ Versa Anti-Cheat Reborn using Rust instead of Python
 ![Capture2](https://user-images.githubusercontent.com/75189508/210025481-cddd53e1-99ae-4f29-a723-ac355593c81d.PNG)
 
 # Todo
-- Multithreading
-- Screenshots + Hardware Info
-- Lock Saved Folder and ZIP it once done
-- Send API Requests
-- Login / Register API Requests
-- Find a way to make ui functions async
+- Fix User Struct
+- Fix main.rs
 
 
 # Program

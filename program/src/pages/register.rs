@@ -9,7 +9,7 @@ pub fn render(page: &Page) -> Element<'static, App> {
 
         // Username input
         row![iced::widget::TextInput::new(
-                "Enter username here", &page.username, App::NameInputChanged
+                "Enter username here", &page.user.name, App::NameInputChanged
             ).padding(10).size(20),
         ].padding(10),
         

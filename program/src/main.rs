@@ -3,19 +3,17 @@ mod pages;
 mod lib;
 use lib::{
     discord,
-    system::System,
-    zip::Zip,
     user::User,
-    files
+    thread::Thread
 };
 
 fn main() -> iced::Result {
     Page::run(Settings {
         window: iced::window::Settings {
             size: (500, 400),
-            resizable: false,
+            resizable: true,
             decorations: true,
-            min_size: None,
+            min_size: Some((500, 400)),
             max_size: None,
             visible: true,
             transparent: false,
@@ -60,7 +58,7 @@ impl Sandbox for Page {
     fn new() -> Self {
         let _user: User = User::new();
         Self {
-            current_page: _user.login(),
+            current_page: 1, // _user.login()
             user: _user,
             current_token: String::new(),
             token: String::new(),
@@ -90,6 +88,10 @@ impl Sandbox for Page {
 
     // Handle the user input updates
     fn update(&mut self, app: App) {
+        // Initialize the thread
+        let mut thread: Thread = Thread::new();
+
+        // Match app for ui updates
         match app {
             App::NameInputChanged(name) => self.user.name = name,
             App::TokenInputChanged(token) => self.token = token,
@@ -101,77 +103,34 @@ impl Sandbox for Page {
                 }
             },
             App::StartPressed => {
+                println!("thread started");
+
+                // Clone the token for thread
+                thread.start(&self.user.bearer, &self.token);
+
+                // Update variables
                 self.current_token = self.token.clone();
                 self.logs = Vec::new();
-                
-                // Clone the token for thread
-                let token: String = self.token.clone();
-                let bearer: String = self.user.bearer.clone();
 
                 // Send a start notification
-                if !discord::send_start_message(&bearer, &token) {
-                    self.error = String::from("failed to send start message");
+                if !discord::send_start_message(&self.user.bearer, &self.token) {
+                    self.logs.push(String::from("failed to send start message"));
                     return
-                }
-
-                // Start the main thread
-                match std::thread::spawn(move || {main_loop(&bearer, &token);}).join() {
-                    Ok(_) => (),
-                    Err(_) => self.error = String::from("failed to start main thread")
                 }
             },
             App::StopPressed => {
-                // Clone the token for thread
-                let token: String = self.token.clone();
-                let bearer: String = self.user.bearer.clone();
+                println!("thread stopped");
 
-                // Send a start notification
-                discord::send_stop_message(&bearer, &token);
+                // Stop the thread
+                thread.stop();
 
                 // Reset variables
                 self.current_token = String::new();
                 self.logs = Vec::new();
+
+                // Send a start notification
+                discord::send_stop_message(&self.user.bearer, &self.token);
             },
         }
-    }
-}
-
-// Main thread loop
-fn main_loop(bearer: &str, token: &str) {
-    let mut sys: System = System::new();
-    let mut zip: Zip = Zip::new();
-    loop {
-        // Start after 10 seconds
-        std::thread::sleep(std::time::Duration::from_secs(10));
-
-        // Capture the image then add it to the zip file
-        let img_buf: Vec<u8> = match files::capture_image() {
-            Ok(f) => f,
-            Err(e) => panic!("Error: {}", e)
-        };
-        match zip.add_file("screenshot.png", &img_buf) {
-            Ok(_) => (),
-            Err(e) => panic!("Error: {}", e)
-        }
-        
-        // Get the system info then add it to a file
-        let sys_info = match serde_json::to_vec(&sys.info()){
-            Ok(buf) => buf,
-            Err(e) => panic!("Error: {}", e)
-        };
-        match zip.add_file("sysinfo.json", &sys_info) {
-            Ok(_) => (),
-            Err(e) => panic!("Error: {}", e)
-        }
-
-        // Encode the image data
-        let image_data: String = files::encode_png(img_buf);
-        let sysinfo_data: String = files::encode_json(sys_info);
-
-        // Send the files to discord
-        discord::send_files(bearer, token, &image_data, &sysinfo_data);
-
-        // Repeat after 20 to 50 seconds
-        std::thread::sleep(std::time::Duration::from_secs(50));
     }
 }

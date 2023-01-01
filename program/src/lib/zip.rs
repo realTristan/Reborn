@@ -9,7 +9,7 @@ impl Zip {
         let _path: String = sha256::digest(
             global::get_unix_time().as_nanos().to_string()
         );
-        let _file = match std::fs::File::create(&_path) {
+        let _file = match std::fs::File::create(format!("{}.zip", &_path)) {
             Ok(f) => f,
             Err(e) => panic!("Error: {}", e)
         };

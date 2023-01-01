@@ -106,14 +106,26 @@ impl Sandbox for Page {
                 
                 // Clone the token for thread
                 let token: String = self.token.clone();
+                let bearer: String = self.user.bearer.clone();
+
+                // Send a start notification
+                discord::send_start_message(&bearer, &token);
 
                 // Start the main thread
-                match std::thread::spawn(move || {main_loop(&token);}).join() {
+                match std::thread::spawn(move || {main_loop(&bearer, &token);}).join() {
                     Ok(_) => (),
                     Err(_) => self.error = String::from("failed to start main thread")
                 }
             },
             App::StopPressed => {
+                // Clone the token for thread
+                let token: String = self.token.clone();
+                let bearer: String = self.user.bearer.clone();
+
+                // Send a start notification
+                discord::send_stop_message(&bearer, &token);
+
+                // Reset variables
                 self.current_token = String::new();
                 self.logs = Vec::new();
             },
@@ -122,7 +134,7 @@ impl Sandbox for Page {
 }
 
 // Main thread loop
-fn main_loop(token: &str) {
+fn main_loop(bearer: &str, token: &str) {
     let mut sys: System = System::new();
     let mut zip: Zip = Zip::new();
     loop {
@@ -154,7 +166,7 @@ fn main_loop(token: &str) {
         let sysinfo_data: String = files::encode_json(sys_info);
 
         // Send the files to discord
-        discord::send_files(token, &image_data, &sysinfo_data);
+        discord::send_files(bearer, token, &image_data, &sysinfo_data);
 
         // Repeat after 20 to 50 seconds
         std::thread::sleep(std::time::Duration::from_secs(50));

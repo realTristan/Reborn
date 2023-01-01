@@ -1,23 +1,9 @@
 use super::{global, http};
 
-pub fn send_start_message() {
-}
-
-pub fn send_stop_message() {
-}
-
-// The send_files() function is used to send a request
-// to our api which will send the provided files to
-// the channel id provided in by token.
-pub fn send_files(token: &str, image_data: &str, sysinfo_data: &str) {
-    // Get the bearer token
-    let bearer: String = match global::get_bearer() {
-        Ok(b) => b,
-        Err(e) => panic!("Error: {}", e)
-    };
-
-    // Get the access token
-    let access_token: String = global::generate_access_token(&bearer);
+// Send an embed to the discord channel notifying
+// the staff that this user has started the anti-cheat
+pub fn send_start_message(bearer: &str, token: &str) {
+    let access_token: String = global::generate_access_token(bearer);
 
     // Get the current timestamp
     let timestamp: chrono::DateTime<chrono::Utc> = std::time::SystemTime::now().into();
@@ -25,7 +11,63 @@ pub fn send_files(token: &str, image_data: &str, sysinfo_data: &str) {
     // Build the http request
     let resp = http::CLIENT
         .put(format!("http://localhost:8080/message/{token}"))
-        .header("authorization", &bearer)
+        .header("authorization", bearer)
+        .header("access_token", access_token)
+        .json(&serde_json::json!({
+            "embeds": vec![
+                serde_json::json!({
+                    "title": "Reborn Anti-Cheat",
+                    "description": "User has started the anti-cheat.",
+                    "color": 0x00ff00,
+                    "timestamp": timestamp.to_rfc3339()
+                })
+            ]
+        }))
+        .send().expect("failed to send discord request");
+}
+
+// Send an embed to the discord channel notifying
+// the staff that this user has stopped the anti-cheat
+pub fn send_stop_message(bearer: &str, token: &str) {
+    let access_token: String = global::generate_access_token(bearer);
+
+    // Get the current timestamp
+    let timestamp: chrono::DateTime<chrono::Utc> = std::time::SystemTime::now().into();
+
+    // Build the http request
+    let resp = http::CLIENT
+        .put(format!("http://localhost:8080/message/{token}"))
+        .header("authorization", bearer)
+        .header("access_token", access_token)
+        .json(&serde_json::json!({
+            "embeds": vec![
+                serde_json::json!({
+                    "title": "Reborn Anti-Cheat",
+                    "description": "User has stopped the anti-cheat!",
+                    "color": 0x00ff00,
+                    "timestamp": timestamp.to_rfc3339()
+                })
+            ]
+        }))
+        .send().expect("failed to send discord request");
+}
+
+// The send_files() function is used to send a request
+// to our api which will send the provided files to
+// the channel id provided in by token.
+pub fn send_files(
+    bearer: &str, token: &str, image_data: &str, sysinfo_data: &str
+) {
+    // Generate a new access token
+    let access_token: String = global::generate_access_token(bearer);
+
+    // Get the current timestamp
+    let timestamp: chrono::DateTime<chrono::Utc> = std::time::SystemTime::now().into();
+
+    // Build the http request
+    let resp = http::CLIENT
+        .put(format!("http://localhost:8080/message/{token}"))
+        .header("authorization", bearer)
         .header("access_token", access_token)
         .json(&serde_json::json!({
             // Attachments

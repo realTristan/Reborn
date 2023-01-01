@@ -3,7 +3,7 @@ use super::{global, http};
 #[derive(Debug, Clone)]
 pub struct User {
     pub name: String,
-    bearer: String,
+    pub bearer: String,
 }
 
 impl User {

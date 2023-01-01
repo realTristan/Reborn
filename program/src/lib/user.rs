@@ -53,10 +53,7 @@ impl User {
             .send().expect("failed to send login request");
         
         // Return the page number depending on resp success
-        return match resp.status().is_success() {
-            true => 2,
-            false => 1
-        }
+        return resp.status().is_success() as u8;
     }
 
     // Register an account to the database

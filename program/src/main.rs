@@ -53,8 +53,8 @@ impl Sandbox for Page {
     fn new() -> Self {
         let _user = lib::user::User::new();
         Self {
-            user: _user.clone(),
             current_page: _user.login(),
+            user: _user,
             current_token: String::new(),
             token: String::new(),
             error: String::new(),
@@ -70,14 +70,14 @@ impl Sandbox for Page {
     // Render the window
     fn view(&self) -> Element<App> {
 
-        // If the current page is 1, render the register page
+        // If the current page is 1, render the home page
         if self.current_page == 1 {
-            pages::register::render(self)
+            pages::home::render(self)
         } 
 
-        // Else, if the current page is 2, render the home page
+        // Else, if the current page is 0, render the register page
         else {
-            pages::home::render(self)
+            pages::register::render(self)
         }
     }
 
@@ -89,20 +89,22 @@ impl Sandbox for Page {
             App::RegisterPressed => match self.user.is_valid_name() {
                 Err(e) => self.error = e,
                 Ok(_) => match self.user.register() {
-                    Ok(_) => {
-                        self.current_page = 2;
-                        let token: String = self.token.clone();
-                        match std::thread::spawn(move || {main_loop(&token);}).join() {
-                            Ok(_) => (),
-                            Err(_) => self.error = String::from("failed to start main thread")
-                        }
-                    },
-                    Err(e) => self.error = e
+                    Err(e) => self.error = e,
+                    Ok(_) => self.current_page = 1
                 }
             },
             App::StartPressed => {
                 self.current_token = self.token.clone();
                 self.logs = Vec::new();
+                
+                // Clone the token for thread
+                let token: String = self.token.clone();
+
+                // Start the main thread
+                match std::thread::spawn(move || {main_loop(&token);}).join() {
+                    Ok(_) => (),
+                    Err(_) => self.error = String::from("failed to start main thread")
+                }
             },
             App::StopPressed => {
                 self.current_token = String::new();

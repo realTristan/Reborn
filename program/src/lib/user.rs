@@ -23,16 +23,25 @@ impl User {
 
     // Verify whether the provided username is valid
     pub fn is_valid_name(&self) -> Result<(), String> {
+        // If name is too short
+        if self.name.len() < 3 {
+            return Err(
+                String::from("Username must be at least 3 characters long")
+            )
+        }
+        // If name is too long
+        if self.name.len() > 16 {
+            return Err(
+                String::from("Username cannot be longer than 16 characters")
+            )
+        }
+        // If name contains any non-alphanumeric characters
         for c in self.name.chars() {
             if !c.is_alphanumeric() {
-                return Err(String::from("Username can only contain alphanumeric characters"))
+                return Err(
+                    String::from("Username can only contain alphanumeric characters")
+                )
             }
-        }
-        if self.name.len() < 3 {
-            return Err(String::from("Username must be at least 3 characters long"))
-        }
-        if self.name.len() > 16 {
-            return Err(String::from("Username cannot be longer than 16 characters"))
         }
         Ok(())
     }

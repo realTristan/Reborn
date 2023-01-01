@@ -1,6 +1,6 @@
 
 
-// Create a new file
+// Create a new directory at the provided path
 pub fn mkdir(path: &str) -> Result<(), std::io::Error> {
     return match std::fs::create_dir_all(path) {
         Ok(_) => Ok(()),
@@ -8,6 +8,8 @@ pub fn mkdir(path: &str) -> Result<(), std::io::Error> {
     };
 }
 
+// Read the provided file via the provided path then
+// return the buffer as a vector of bytes
 pub fn read_file(path: &str) -> Result<Vec<u8>, std::io::Error> {
     return match std::fs::read(path) {
         Ok(f) => Ok(f),
@@ -15,12 +17,16 @@ pub fn read_file(path: &str) -> Result<Vec<u8>, std::io::Error> {
     }
 }
 
+// Convert the png image buffer to a base64 string
+// which can be passed to the api as a readable image
 pub fn encode_png(buf: Vec<u8>) -> String {
     return format!(
         "data:image/png;base64,{}", base64::encode(buf)
     )
 }
 
+// Convert the json buffer to a base64 string which
+// can be passed to the api as a readable file
 pub fn encode_json(buf: Vec<u8>) -> String {
     return format!(
         "data:application/json;base64,{}", base64::encode(buf)

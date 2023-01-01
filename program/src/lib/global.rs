@@ -14,7 +14,9 @@ pub fn get_unix_time() -> std::time::Duration {
 
 // Get the current date and time as a formatted string
 pub fn get_date_time() -> String {
-    return chrono::offset::Utc::now().format("%Y-%m-%d:%H:%M:%S").to_string()
+    return chrono::offset::Utc::now()
+        .format("%Y-%m-%d:%H:%M:%S")
+        .to_string()
 }
 
 // The generate_access_token function is used to generate

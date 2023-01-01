@@ -4,6 +4,7 @@ pub struct Zip {
     data: zip::ZipWriter<std::fs::File>
 }
 impl Zip {
+    // Initialize and create a new zip file
     pub fn new() -> Self {
         let _path: String = sha256::digest(
             global::get_unix_time().as_nanos().to_string()
@@ -17,6 +18,7 @@ impl Zip {
         }
     }
 
+    // Add a file to the zip file
     pub fn add_file(&mut self, name: &str, buf: &Vec<u8>) -> Result<(), zip::result::ZipError>{
         match self.data.start_file(name, zip::write::FileOptions::default()) {
             Ok(_) => (),

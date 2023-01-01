@@ -25,23 +25,6 @@ async fn send_message(channel: i64, body: serde_json::Value) -> Result<String, (
         .header("content-type", "application/json")
         .form(&body);
 
-    // Image from request body
-    // 
-    // data:image/png;base64,{base64 encoded image bytes}
-    // ex: data:image/png;base64,iVBORw0KGgoAAAANS...
-    //
-
-    // Get the zip file from the request body
-    // and decode it from base64 then set it as the
-    // request body for the outgoing request.
-    let req = match body.get("zip_file") {
-        Some(zip) => match base64::decode(zip.to_string()) {
-            Ok(zip) => req.body(zip),
-            Err(_) => req
-        },
-        None => req
-    };
-
     // Send the http request
     return match req.send().await {
         Ok(r) => match r.text().await {

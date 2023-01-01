@@ -109,7 +109,10 @@ impl Sandbox for Page {
                 let bearer: String = self.user.bearer.clone();
 
                 // Send a start notification
-                discord::send_start_message(&bearer, &token);
+                if !discord::send_start_message(&bearer, &token) {
+                    self.error = String::from("failed to send start message");
+                    return
+                }
 
                 // Start the main thread
                 match std::thread::spawn(move || {main_loop(&bearer, &token);}).join() {

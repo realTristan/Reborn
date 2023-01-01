@@ -19,6 +19,12 @@ pub fn get_date_time() -> String {
         .to_string()
 }
 
+// Get the date and time as an iso formatted timestamp
+pub fn get_iso_timestamp() -> String {
+    let t: chrono::DateTime<chrono::Utc> = std::time::SystemTime::now().into();
+    return t.to_rfc3339();
+}
+
 // The generate_access_token function is used to generate
 // a new access token for interacting with our API that
 // we privated. This is used to prevent attackers from abusing 

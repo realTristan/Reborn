@@ -8,6 +8,7 @@ Versa Anti-Cheat Reborn using Rust instead of Python
 # Todo
 - Fix User Struct
 - Fix main.rs
+- Fix all the horrible security bugs 😭
 
 
 # Program

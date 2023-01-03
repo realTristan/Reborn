@@ -75,9 +75,7 @@ HEADERS: {
     access_token: SHA256("{authorization}:{time_in_seconds}:{secret_key}")
 }
 BODY: {
-    embed: "discord embed json",
-    image: "base64 encoded image buffer",
-    hardware_info: "base64 encoded running programs, users hwid, etc."
+    discord_api_message_body
 }
 ```
 

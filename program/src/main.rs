@@ -4,7 +4,7 @@ mod lib;
 use lib::{
     discord,
     user::User,
-    thread::Thread
+    thread::Thread, global
 };
 
 fn main() -> iced::Result {
@@ -37,6 +37,7 @@ pub enum App {
 
 // Page struct
 pub struct Page {
+    running: bool,
     current_token: String,
     logs: Vec<String>,
     current_page: u8,
@@ -58,6 +59,7 @@ impl Sandbox for Page {
     fn new() -> Self {
         let _user: User = User::new();
         Self {
+            running: false,
             current_page: 1, // _user.login()
             user: _user,
             current_token: String::new(),
@@ -103,33 +105,44 @@ impl Sandbox for Page {
                 }
             },
             App::StartPressed => {
-                println!("thread started");
+                if self.running {
+                    return self.logs.push(String::from("Anti-cheat already started"));
+                }
 
                 // Clone the token for thread
                 thread.start(&self.user.bearer, &self.token);
 
                 // Update variables
+                self.running = true;
                 self.current_token = self.token.clone();
                 self.logs = Vec::new();
+                self.logs.push(format!("{}: Anti-cheat started", global::get_date_time()));
 
                 // Send a start notification
                 if !discord::send_start_message(&self.user.bearer, &self.token) {
-                    self.logs.push(String::from("failed to send start message"));
+                    self.logs.push(String::from("Failed to send start message"));
                     return
                 }
             },
             App::StopPressed => {
-                println!("thread stopped");
+                if !self.running {
+                    return self.logs.push(String::from("anti-cheat already stopped"));
+                }
 
                 // Stop the thread
                 thread.stop();
 
                 // Reset variables
+                self.running = false;
                 self.current_token = String::new();
                 self.logs = Vec::new();
+                self.logs.push(format!("{}: Anti-cheat stopped", global::get_date_time()));
 
                 // Send a start notification
-                discord::send_stop_message(&self.user.bearer, &self.token);
+                if !discord::send_stop_message(&self.user.bearer, &self.token) {
+                    self.logs.push(String::from("Failed to send stop message"));
+                    return
+                }
             },
         }
     }

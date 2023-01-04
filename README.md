@@ -8,8 +8,6 @@ Versa Anti-Cheat Reborn using Rust instead of Python
 # Program Todo
 - Cleanup
 - Find a way to pass self.logs to thread and pages
-- Make it so the user can't press stop until they press start.
-- Make it so the user can't press start again once already started
 - Fix all the horrible security bugs 😭
 
 

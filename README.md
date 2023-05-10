@@ -6,6 +6,9 @@ Reborn is a secure gaming anti-cheat written in Rust and is the superior to Vers
 Because Reborn is implemented entirely in Rust, you can expect fast, and reliable program connectivity.
 
 # Program Preview
+The program has two primary screens. The first is the registration screen. When an user registers with their username, they can no longer change it. Their username becomes bound to their hwid. This makes it much easier
+to detect hwid spoofers who are most likely cheating. The second screen is for token input. As a tournament host, you can generate a token in your discord server, with the `/token create` discord command. This
+makes it so that all data and screenshots get sent to that channel.
 <div float="left">
 <img src="https://user-images.githubusercontent.com/75189508/210023258-362d4ca1-9f21-4d33-b9a5-579b0796bc58.PNG" width="400" height="375">
 <img src="https://user-images.githubusercontent.com/75189508/210025481-cddd53e1-99ae-4f29-a723-ac355593c81d.PNG" width="400" height="375">

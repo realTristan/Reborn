@@ -1,5 +1,4 @@
-# Reborn
-
+# Reborn ![Stars](https://img.shields.io/github/stars/realTristan/Reborn?color=brightgreen) ![Watchers](https://img.shields.io/github/watchers/realTristan/Reborn?label=Watchers)
 
 # Preview
 ![Capture](https://user-images.githubusercontent.com/75189508/210023258-362d4ca1-9f21-4d33-b9a5-579b0796bc58.PNG)

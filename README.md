@@ -31,6 +31,7 @@ makes it so that all data and screenshots get sent to that channel.
 ```
 
 # API Documentation
+For clarity regarding how the program, discord bot, and server backend work, I wrote a quick api documentation regarding the functionalities behind the scenes.
 ## Accounts
 ### Register with HWID
 ```go

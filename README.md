@@ -6,10 +6,20 @@
 ![Capture2](https://user-images.githubusercontent.com/75189508/210025481-cddd53e1-99ae-4f29-a723-ac355593c81d.PNG)
 
 # Discord Bot
-## Commands
-- /token create
-- /token delete {token}
-- /token info {token}
+## Create a Token
+```go
+/token create
+```
+
+## Delete a Token
+```go
+/token delete {token}
+```
+
+## Get Token Info
+```go
+/token info {token}
+```
 
 # API Documentation
 ## Accounts
@@ -63,7 +73,7 @@ BODY: {
 
 ## Tokens
 ### Generate New Token
-```
+```go
 HTTP PUT /token
 HEADERS: {
     authorization: "user hardware id",
@@ -79,7 +89,7 @@ RESPONSE: {
 ```
 
 ### Delete Token
-```
+```go
 HEADERS: {
     authorization: "user hardware id",
     access_token: SHA256("{authorization}:{time_in_seconds}:{secret_key}")
@@ -90,7 +100,7 @@ BODY: {
 ```
 
 ### Get Token Data
-```
+```go
 HEADERS: {
     authorization: "user hardware id",
     access_token: SHA256("{authorization}:{time_in_seconds}:{secret_key}")

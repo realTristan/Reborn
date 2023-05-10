@@ -15,6 +15,8 @@ makes it so that all data and screenshots get sent to that channel.
 </div>
 
 # Discord Bot
+The discord bot is used to create new vac tokens, delete unused, or expired tokens, and to get a tokens information. Each of these functions can be called by the tournament host
+in their corresponding discord server. After the launch of Reborn, you can invite the Reborn discord bot into your server.
 ## Create a Token
 ```go
 /token create
@@ -31,7 +33,7 @@ makes it so that all data and screenshots get sent to that channel.
 ```
 
 # API Documentation
-For clarity regarding how the program, discord bot, and server backend work, I wrote a quick api documentation regarding the functionalities behind the scenes.
+For clarity regarding how the program, discord bot, and server backend work, I wrote a quick api documentation to explain the functionalities behind the scenes.
 ## Accounts
 ### Register with HWID
 ```go

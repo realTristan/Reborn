@@ -10,14 +10,10 @@ impl User {
     pub fn new() -> Self {
         Self {
             name: String::new(),
-            bearer: "test".to_string(),
-            /*
-            match global::get_bearer() {
+            bearer: match auth::get_bearer() {
                 Ok(b) => b,
                 Err(e) => panic!("Error: {}", e)
             }
-            
-            */
         }
     }
 
@@ -29,12 +25,14 @@ impl User {
                 String::from("Username must be at least 3 characters long")
             )
         }
+
         // If name is too long
         if self.name.len() > 16 {
             return Err(
                 String::from("Username cannot be longer than 16 characters")
             )
         }
+        
         // If name contains any non-alphanumeric characters
         for c in self.name.chars() {
             if !c.is_alphanumeric() {
@@ -77,7 +75,6 @@ impl User {
             .header("access_token", access_token)
             .json(&serde_json::json!({"username": self.name, "identifier": self.bearer}))
             .send().expect("failed to send register request");
-        
         
         // If the response was a success, return Ok
         if resp.status().is_success() {

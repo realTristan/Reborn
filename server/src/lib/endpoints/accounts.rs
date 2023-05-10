@@ -43,7 +43,7 @@ async fn register_user_endpoint(
         )
     };
 
-    // Get the provided authorization headers
+    /* Get the provided authorization headers
     // Authorization: sha256("hwid")
     let auth: String = http::header(&req, "authorization");
     let access_token: String = http::header(&req, "access_token");
@@ -56,7 +56,7 @@ async fn register_user_endpoint(
                 "response": "Invalid request"
             })
         )
-    }
+    }*/
 
     // Check if the account already exists
     if db.account_already_exists(&username, &identifier).await {

@@ -10,7 +10,6 @@ pub(crate) struct Thread {
 }
 
 impl Thread {
-
     // Initialize a new thread
     pub fn new() -> Self {
         Self {
@@ -38,14 +37,12 @@ impl Thread {
 
     // Main loop
     fn main(&self, bearer: &str, token: &str) {
-
         // Initialize sys and zip variables
         let mut sys: System = System::new();
         let mut zip: Zip = Zip::new();
 
         // Until the user presses the stop button...
         while self.running {
-
             // Start after 10 seconds
             std::thread::sleep(std::time::Duration::from_secs(10));
             

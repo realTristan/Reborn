@@ -60,7 +60,7 @@ impl Sandbox for Page {
         let _user: User = User::new();
         Self {
             running: false,
-            current_page: 1, // _user.login()
+            current_page: _user.login(),
             user: _user,
             current_token: String::new(),
             token: String::new(),
@@ -76,12 +76,10 @@ impl Sandbox for Page {
 
     // Render the window
     fn view(&self) -> Element<App> {
-
         // If the current page is 1, render the home page
         if self.current_page == 1 {
             pages::home::render(self)
         } 
-
         // Else, if the current page is 0, render the register page
         else {
             pages::register::render(self)

@@ -16,7 +16,6 @@ lazy_static::lazy_static! {
 // As a General group
 #[group]
 #[commands(ping)]
-// This converts to commands::GENERAL_GROUP in main.rs
 struct General; 
 
 // Ping command for testing the bot
@@ -28,6 +27,55 @@ pub async fn ping(ctx: &Context, msg: &Message) -> CommandResult {
     return Ok(())
 }
 
+// Main Token Command
+#[command]
+pub async fn token(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
+    // Get the option argument (the first argument)
+    let option: String = match args.single::<String>() {
+        Ok(option) => option,
+        Err(_) => {
+            msg.reply(ctx, "Invalid option. Please use `create`, `delete`, or `info`").await?;
+            return Ok(())
+        }
+    };
+
+    // Get the bearer token for the message author
+    let bearer: String = sha256::digest(msg.author.id.0.to_string());
+
+    // Get the access token for the message author
+    let access_token: String = generate_access_token(&bearer);
+
+    // Create a new token
+    if option == "new" || option == "create" {
+        option_create_token(&bearer, &access_token, msg, ctx).await;
+    }
+    
+    // Delete the provided token
+    else if option == "delete" || option == "remove" {
+        let token: String = args.single::<String>().unwrap();
+        option_delete_token(&bearer, &access_token, &token, msg, ctx).await;
+    } 
+    
+    // Show the provided token's data
+    else if option == "info" || option == "show" {
+        let token: String = match args.single::<String>() {
+            Ok(token) => token,
+            Err(_) => {
+                msg.reply(ctx, "Invalid token. Please provide a token.").await?;
+                return Ok(())
+            }
+        };
+        option_show_token(&bearer, &access_token, &token, msg, ctx).await;
+    } 
+
+    // Else, respond with an error message
+    else {
+        msg.reply(ctx, "Invalid option. Please use `new`, `delete`, or `list`.").await?;
+    }
+
+    // Return success value
+    return Ok(())
+}
 
 // The generate_access_token function is used to generate
 // a new access token for interacting with our API that
@@ -113,42 +161,4 @@ async fn option_show_token(bearer: &str, access_token: &str, token: &str, msg: &
             let _ = msg.reply(ctx, format!("An error has occurred: {}", e)).await;
         }
     }
-}
-
-
-#[command]
-pub async fn token(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
-    // Get the option argument (the first argument)
-    let option: String = args.single::<String>().unwrap();
-
-    // Get the bearer token for the message author
-    let bearer: String = sha256::digest(msg.author.id.0.to_string());
-
-    // Get the access token for the message author
-    let access_token: String = generate_access_token(&bearer);
-
-    // Create a new token
-    if option == "new" || option == "create" {
-        option_create_token(&bearer, &access_token, msg, ctx).await;
-    }
-    
-    // Delete the provided token
-    else if option == "delete" || option == "remove" {
-        let token: String = args.single::<String>().unwrap();
-        option_delete_token(&bearer, &access_token, &token, msg, ctx).await;
-    } 
-    
-    // Show the provided token's data
-    else if option == "info" || option == "show" {
-        let token: String = args.single::<String>().unwrap();
-        option_show_token(&bearer, &access_token, &token, msg, ctx).await;
-    } 
-
-    // Else, respond with an error message
-    else {
-        msg.reply(ctx, "Invalid option. Please use `new`, `delete`, or `list`.").await?;
-    }
-
-    // Return success value
-    return Ok(())
 }

@@ -44,7 +44,9 @@ impl Database {
             username, hwid
         ).execute(&self.conn).await;
 
+        println!("{:?}", query.err());
+
         // Return query result
-        return !query.is_err();
+        return false;
     }
 }

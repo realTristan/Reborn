@@ -1,9 +1,11 @@
 # Reborn ![Stars](https://img.shields.io/github/stars/realTristan/Reborn?color=brightgreen) ![Watchers](https://img.shields.io/github/watchers/realTristan/Reborn?label=Watchers)
 ![banner](https://github.com/realTristan/Reborn/assets/75189508/0be2cf20-d63d-425a-ac96-0b1907896b4d)
 
+# About
+
 # Program Preview
-![Capture](https://user-images.githubusercontent.com/75189508/210023258-362d4ca1-9f21-4d33-b9a5-579b0796bc58.PNG)
-![Capture2](https://user-images.githubusercontent.com/75189508/210025481-cddd53e1-99ae-4f29-a723-ac355593c81d.PNG)
+<img src="https://user-images.githubusercontent.com/75189508/210025481-cddd53e1-99ae-4f29-a723-ac355593c81d.PNG" width="80" height="80">
+<img src="https://user-images.githubusercontent.com/75189508/210025481-cddd53e1-99ae-4f29-a723-ac355593c81d.PNG" width="80" height="80">
 
 # Discord Bot
 ## Create a Token
@@ -114,3 +116,5 @@ RESPONSE: {
     expires_in: "when the token expires"
 }
 ```
+
+# License

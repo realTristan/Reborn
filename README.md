@@ -14,7 +14,7 @@
 # API Documentation
 ## Accounts
 ### Register with HWID
-```
+```go
 HTTP PUT /account/register/
 HEADERS: {
     authorization: "user hardware id",
@@ -30,7 +30,7 @@ RESPONSE: {
 ```
 
 ### Login with HWID
-```
+```go
 HTTP POST /account/login/
 HEADERS: {
     authorization: "user hardware id",
@@ -47,7 +47,7 @@ RESPONSE: {
 
 ## Discord Messages
 ### Send Embed
-```
+```go
 HTTP POST /message/{token}/
 URL_PARAMETERS: {
     token: SHA256 Encrypted Channel ID

@@ -5,9 +5,10 @@
 
 # Program Preview
 <div float="left">
-<img src="https://user-images.githubusercontent.com/75189508/210025481-cddd53e1-99ae-4f29-a723-ac355593c81d.PNG" width="300" height="250">
-<img src="https://user-images.githubusercontent.com/75189508/210025481-cddd53e1-99ae-4f29-a723-ac355593c81d.PNG" width="300" height="250">
+<img src="https://user-images.githubusercontent.com/75189508/210025481-cddd53e1-99ae-4f29-a723-ac355593c81d.PNG" width="400" height="375">
+<img src="https://user-images.githubusercontent.com/75189508/210025481-cddd53e1-99ae-4f29-a723-ac355593c81d.PNG" width="400" height="375">
 </div>
+
 # Discord Bot
 ## Create a Token
 ```go

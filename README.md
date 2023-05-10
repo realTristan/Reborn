@@ -7,7 +7,7 @@ Because Reborn is implemented entirely in Rust, you can expect fast, and reliabl
 
 # Program Preview
 <div float="left">
-<img src="https://user-images.githubusercontent.com/75189508/210025481-cddd53e1-99ae-4f29-a723-ac355593c81d.PNG" width="400" height="375">
+<img src="https://user-images.githubusercontent.com/75189508/210023258-362d4ca1-9f21-4d33-b9a5-579b0796bc58.PNG" width="400" height="375">
 <img src="https://user-images.githubusercontent.com/75189508/210025481-cddd53e1-99ae-4f29-a723-ac355593c81d.PNG" width="400" height="375">
 </div>
 

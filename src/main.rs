@@ -55,11 +55,12 @@ impl Sandbox for Page {
 
     // Set the default values for the struct
     fn new() -> Self {
-        let _user: User = User::new();
+        let user: User = User::new();
+        let current_page: u8 = user.login();
         Self {
             running: false,
-            current_page: _user.login(),
-            user: _user,
+            current_page,
+            user,
             current_token: String::new(),
             token: String::new(),
             error: String::new(),
@@ -74,14 +75,10 @@ impl Sandbox for Page {
 
     // Render the window
     fn view(&self) -> Element<App> {
-        // If the current page is 1, render the home page
         if self.current_page == 1 {
-            pages::home::render(self).into()
+            return pages::home::render(self).into()
         }
-        // Else, if the current page is 0, render the register page
-        else {
-            pages::register::render(self).into()
-        }
+        return pages::register::render(self).into()
     }
 
     // Handle the user input updates
@@ -143,5 +140,20 @@ impl Sandbox for Page {
                 }
             }
         }
+    }
+
+    fn style(&self) -> iced::theme::Application {
+        iced::theme::Application::default()
+    }
+
+    fn scale_factor(&self) -> f64 {
+        1.0
+    }
+
+    fn run(settings: Settings<()>) -> Result<(), iced::Error>
+    where
+        Self: 'static + Sized,
+    {
+        <Self as iced::Application>::run(settings)
     }
 }

@@ -1,12 +1,9 @@
 use iced::{Element, Sandbox, Settings};
-mod pages;
 mod lib;
-use lib::{
-    discord,
-    user::User,
-    thread::Thread, global
-};
+mod pages;
+use lib::{discord, global, thread::Thread, user::User};
 
+// Run the pages
 fn main() -> iced::Result {
     Page::run(Settings {
         window: iced::window::Settings {
@@ -52,7 +49,7 @@ impl Sandbox for Page {
 
     // Set the theme to dark
     fn theme(&self) -> iced::Theme {
-        return iced::Theme::Dark
+        return iced::Theme::Dark;
     }
 
     // Set the default values for the struct
@@ -71,18 +68,18 @@ impl Sandbox for Page {
 
     // Set the title of the window
     fn title(&self) -> String {
-        return String::from("Reborn Anti-Cheat")
+        return String::from("Reborn Anti-Cheat");
     }
 
     // Render the window
     fn view(&self) -> Element<App> {
         // If the current page is 1, render the home page
         if self.current_page == 1 {
-            pages::home::render(self)
-        } 
+            pages::home::render::render(self)
+        }
         // Else, if the current page is 0, render the register page
         else {
-            pages::register::render(self)
+            pages::register::render::render(self)
         }
     }
 
@@ -99,8 +96,8 @@ impl Sandbox for Page {
                 Err(e) => self.error = e,
                 Ok(_) => match self.user.register() {
                     Err(e) => self.error = e,
-                    Ok(_) => self.current_page = 1
-                }
+                    Ok(_) => self.current_page = 1,
+                },
             },
             App::StartPressed => {
                 if self.running {
@@ -114,14 +111,15 @@ impl Sandbox for Page {
                 self.running = true;
                 self.current_token = self.token.clone();
                 self.logs = Vec::new();
-                self.logs.push(format!("{}: Anti-cheat started", global::get_date_time()));
+                self.logs
+                    .push(format!("{}: Anti-cheat started", global::get_date_time()));
 
                 // Send a start notification
                 if !discord::send_start_message(&self.user.bearer, &self.token) {
                     self.logs.push(String::from("Failed to send start message"));
-                    return
+                    return;
                 }
-            },
+            }
             App::StopPressed => {
                 if !self.running {
                     return self.logs.push(String::from("anti-cheat already stopped"));
@@ -134,14 +132,15 @@ impl Sandbox for Page {
                 self.running = false;
                 self.current_token = String::new();
                 self.logs = Vec::new();
-                self.logs.push(format!("{}: Anti-cheat stopped", global::get_date_time()));
+                self.logs
+                    .push(format!("{}: Anti-cheat stopped", global::get_date_time()));
 
                 // Send a start notification
                 if !discord::send_stop_message(&self.user.bearer, &self.token) {
                     self.logs.push(String::from("Failed to send stop message"));
-                    return
+                    return;
                 }
-            },
+            }
         }
     }
 }

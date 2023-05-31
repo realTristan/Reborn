@@ -17,6 +17,7 @@ fn main() -> iced::Result {
             always_on_top: false,
             icon: None,
             position: iced::window::Position::Centered,
+            platform_specific: iced::window::PlatformSpecific::default()
         },
         ..Default::default()
     })
@@ -75,11 +76,11 @@ impl Sandbox for Page {
     fn view(&self) -> Element<App> {
         // If the current page is 1, render the home page
         if self.current_page == 1 {
-            pages::home::render::render(self)
+            pages::home::render(self).into()
         }
         // Else, if the current page is 0, render the register page
         else {
-            pages::register::render::render(self)
+            pages::register::render(self).into()
         }
     }
 

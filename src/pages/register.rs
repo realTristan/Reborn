@@ -1,8 +1,8 @@
 use crate::{App, Page};
-use iced::widget::{row, text, button, TextInput};
+use iced::widget::{row, text, button, TextInput, Column, Row};
 
 // Render the register page widget
-pub fn render(page: &Page) -> iced::Element<App> {
+pub fn render(page: &Page) -> Column<'_, App, iced::Renderer> {
     iced::widget::column![
         // Header
         header(),
@@ -22,7 +22,7 @@ pub fn render(page: &Page) -> iced::Element<App> {
 }
 
 // Header. This is the title of the page
-pub fn header() -> row {
+pub fn header() -> Row<'static, App, iced::Renderer> {
     return row![text("Reborn Anti-Cheat").size(40)].padding(10)
 }
 
@@ -37,7 +37,7 @@ pub fn error_label(page: &Page) -> text::Text {
 
 // Warning message. This is shown to notify the user that the username
 // they provide is bound to their hardware and cannot be changed.
-pub fn warning_message() -> row {
+pub fn warning_message() -> Row<'static, App, iced::Renderer> {
     return row![
         text("The username you provide is bound to your hardware and cannot be changed.")
             .horizontal_alignment(iced::alignment::Horizontal::Center)
@@ -48,7 +48,7 @@ pub fn warning_message() -> row {
 
 // Register button. This is used to register the user with the name
 // they provided.
-pub fn register_button() -> row {
+pub fn register_button() -> Row<'static, App, iced::Renderer> {
     return row![button(
         text("Register").horizontal_alignment(iced::alignment::Horizontal::Center)
     )
@@ -60,12 +60,12 @@ pub fn register_button() -> row {
 
 // Username input. This is used to get the username from the user.
 // Their name will be sent to the server.
-pub fn name_input(page: &Page) -> row {
+pub fn name_input(page: &Page) -> Row<'static, App, iced::Renderer> {
     return row![TextInput::new(
         "Enter username here",
-        &page.user.name,
-        App::NameInputChanged
+        &page.user.name
     )
+    .on_input(App::NameInputChanged)
     .padding(10)
     .size(20),]
     .padding(10)

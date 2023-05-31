@@ -1,5 +1,5 @@
 // Library Usages
-use super::global;
+use super::utils;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
@@ -39,11 +39,12 @@ pub fn verify(bearer: &str, access_token: &str) -> bool {
         Ok(token_storage) => token_storage,
         Err(e) => {println!("{:?}", e); return false},
     };
+
     // Get the system time since epoch. This value
     // is used to check how long ago the auth token was
     // generated. Doing this prevents users from consecutively
     // using a single auth token if trying to abuse the api
-    let time: u64 = global::get_time().as_secs();
+    let time: u64 = utils::get_time().as_secs();
 
     // Convert the token storage into a mutable variable.
     // This is required so that we can append the access_token
@@ -61,6 +62,7 @@ pub fn verify(bearer: &str, access_token: &str) -> bool {
                 bearer.to_string(),
                 [time.to_string(), access_token.to_string()].to_vec(),
             );
+
             // Return true as the token did not
             // previously exist in the token storage
             return true;
@@ -113,6 +115,7 @@ fn storage_handler(bearer_storage: &mut Vec<String>, access_token: &str, time: &
         // return satatement
         return true;
     }
+
     // After the users current token storage has or hasn't been
     // cleared, check whether the access_token is already existant
     // in the token storage. If it is, return false, thus the

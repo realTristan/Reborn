@@ -11,7 +11,6 @@ use crate::lib::{
 async fn register_user_endpoint(
     req: HttpRequest, db: web::Data<Database>, body: web::Bytes
 ) -> HttpResponse {
-
     // Get the request body
     let body: serde_json::Value = match http::body(&body) {
         Ok(body) => body,

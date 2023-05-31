@@ -59,7 +59,7 @@ pub fn header(page: &Page) -> column {
     .align_items(iced::Alignment::Center);
 }
 
-// Start button
+// Start the anti-cheat button
 pub fn start_button() -> button {
     return button(text("Start").horizontal_alignment(iced::alignment::Horizontal::Center))
         .on_press(App::StartPressed)
@@ -67,7 +67,7 @@ pub fn start_button() -> button {
         .width(iced::Length::FillPortion(15));
 }
 
-// Stop button
+// Stop the anti-cheat button
 pub fn stop_button() -> button {
     return button(text("Stop").horizontal_alignment(iced::alignment::Horizontal::Center))
         .on_press(App::StopPressed)
